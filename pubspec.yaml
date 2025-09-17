@@ -10,10 +10,47 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Navegación
+  go_router: ^14.0.0
+
+  # Estado
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Serialización
+  json_annotation: ^4.9.0
+  freezed_annotation: ^2.4.4
+
+  # Base de datos
+  sqflite: ^2.4.0
+
+  # Persistencia
+  shared_preferences: ^2.3.2
+
+  # Gráficos
+  fl_chart: ^0.69.0
+
+  # Utilidades
+  intl: ^0.19.0
+
+  # PDFs
+  pdf: ^3.11.1
+  printing: ^5.13.2
+
+  # Archivos
+  file_picker: ^8.1.2
+  path_provider: ^2.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+
+  # Generación de código
+  build_runner: ^2.4.13
+  json_serializable: ^6.8.0
+  freezed: ^2.5.7
+  riverpod_generator: ^2.4.3
 
 flutter:
   uses-material-design: true
