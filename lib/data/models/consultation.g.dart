@@ -29,6 +29,7 @@ _$ConsultationImpl _$$ConsultationImplFromJson(Map<String, dynamic> json) =>
           .map((e) => Attachment.fromJson(e as Map<String, dynamic>))
           .toList(),
       price: (json['price'] as num).toDouble(),
+      pdfPath: json['pdfPath'] as String?,
     );
 
 Map<String, dynamic> _$$ConsultationImplToJson(_$ConsultationImpl instance) =>
@@ -44,4 +45,5 @@ Map<String, dynamic> _$$ConsultationImplToJson(_$ConsultationImpl instance) =>
       'observations': instance.observations,
       'attachments': instance.attachments,
       'price': instance.price,
+      'pdfPath': instance.pdfPath,
     };

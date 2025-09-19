@@ -19,6 +19,7 @@ class Consultation with _$Consultation {
     String? observations,
     required List<Attachment> attachments,
     required double price,
+    String? pdfPath,
   }) = _Consultation;
 
   factory Consultation.fromJson(Map<String, dynamic> json) => _$ConsultationFromJson(json);

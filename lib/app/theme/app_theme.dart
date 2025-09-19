@@ -23,6 +23,12 @@ class AppTheme {
         ),
         iconTheme: IconThemeData(color: Colors.white),
       ),
+      tabBarTheme: const TabBarThemeData(
+        indicatorColor: primaryColor,
+        labelColor: primaryColor,
+        unselectedLabelColor: Colors.grey,
+        dividerColor: Colors.transparent,
+      ),
       drawerTheme: const DrawerThemeData(
         backgroundColor: Colors.white,
       ),
@@ -59,6 +65,12 @@ class AppTheme {
           fontWeight: FontWeight.w500,
         ),
         iconTheme: IconThemeData(color: Colors.white),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        indicatorColor: primaryDarkColor,
+        labelColor: primaryDarkColor,
+        unselectedLabelColor: Colors.grey,
+        dividerColor: Colors.transparent,
       ),
       drawerTheme: const DrawerThemeData(
         backgroundColor: Color(0xFF1E1E1E),

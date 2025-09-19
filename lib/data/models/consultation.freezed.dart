@@ -32,6 +32,7 @@ mixin _$Consultation {
   String? get observations => throw _privateConstructorUsedError;
   List<Attachment> get attachments => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
+  String? get pdfPath => throw _privateConstructorUsedError;
 
   /// Serializes this Consultation to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -62,6 +63,7 @@ abstract class $ConsultationCopyWith<$Res> {
     String? observations,
     List<Attachment> attachments,
     double price,
+    String? pdfPath,
   });
 }
 
@@ -91,6 +93,7 @@ class _$ConsultationCopyWithImpl<$Res, $Val extends Consultation>
     Object? observations = freezed,
     Object? attachments = null,
     Object? price = null,
+    Object? pdfPath = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -138,6 +141,10 @@ class _$ConsultationCopyWithImpl<$Res, $Val extends Consultation>
                 ? _value.price
                 : price // ignore: cast_nullable_to_non_nullable
                       as double,
+            pdfPath: freezed == pdfPath
+                ? _value.pdfPath
+                : pdfPath // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -165,6 +172,7 @@ abstract class _$$ConsultationImplCopyWith<$Res>
     String? observations,
     List<Attachment> attachments,
     double price,
+    String? pdfPath,
   });
 }
 
@@ -193,6 +201,7 @@ class __$$ConsultationImplCopyWithImpl<$Res>
     Object? observations = freezed,
     Object? attachments = null,
     Object? price = null,
+    Object? pdfPath = freezed,
   }) {
     return _then(
       _$ConsultationImpl(
@@ -240,6 +249,10 @@ class __$$ConsultationImplCopyWithImpl<$Res>
             ? _value.price
             : price // ignore: cast_nullable_to_non_nullable
                   as double,
+        pdfPath: freezed == pdfPath
+            ? _value.pdfPath
+            : pdfPath // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -260,6 +273,7 @@ class _$ConsultationImpl implements _Consultation {
     this.observations,
     required final List<Attachment> attachments,
     required this.price,
+    this.pdfPath,
   }) : _symptoms = symptoms,
        _medications = medications,
        _treatments = treatments,
@@ -321,10 +335,12 @@ class _$ConsultationImpl implements _Consultation {
 
   @override
   final double price;
+  @override
+  final String? pdfPath;
 
   @override
   String toString() {
-    return 'Consultation(id: $id, patientId: $patientId, date: $date, symptoms: $symptoms, medications: $medications, treatments: $treatments, diagnoses: $diagnoses, weight: $weight, observations: $observations, attachments: $attachments, price: $price)';
+    return 'Consultation(id: $id, patientId: $patientId, date: $date, symptoms: $symptoms, medications: $medications, treatments: $treatments, diagnoses: $diagnoses, weight: $weight, observations: $observations, attachments: $attachments, price: $price, pdfPath: $pdfPath)';
   }
 
   @override
@@ -356,7 +372,8 @@ class _$ConsultationImpl implements _Consultation {
               other._attachments,
               _attachments,
             ) &&
-            (identical(other.price, price) || other.price == price));
+            (identical(other.price, price) || other.price == price) &&
+            (identical(other.pdfPath, pdfPath) || other.pdfPath == pdfPath));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -374,6 +391,7 @@ class _$ConsultationImpl implements _Consultation {
     observations,
     const DeepCollectionEquality().hash(_attachments),
     price,
+    pdfPath,
   );
 
   /// Create a copy of Consultation
@@ -403,6 +421,7 @@ abstract class _Consultation implements Consultation {
     final String? observations,
     required final List<Attachment> attachments,
     required final double price,
+    final String? pdfPath,
   }) = _$ConsultationImpl;
 
   factory _Consultation.fromJson(Map<String, dynamic> json) =
@@ -430,6 +449,8 @@ abstract class _Consultation implements Consultation {
   List<Attachment> get attachments;
   @override
   double get price;
+  @override
+  String? get pdfPath;
 
   /// Create a copy of Consultation
   /// with the given fields replaced by the non-null parameter values.
