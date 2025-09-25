@@ -132,7 +132,8 @@ class _PDFPreviewPageState extends ConsumerState<PDFPreviewPage> {
 
     try {
       final fileName = 'Receta_${widget.patient.name}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-      final filePath = await _pdfService.savePDFToStorage(_pdfBytes!, fileName);
+      final consultationDate = widget.consultation.date;
+      final filePath = await _pdfService.savePDFToStorage(_pdfBytes!, fileName, widget.patient, consultationDate);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -4,6 +4,8 @@ class ResponsiveUtils {
   static const double mobileBreakpoint = 600;
   static const double tabletBreakpoint = 1024;
   static const double desktopBreakpoint = 1200;
+  static const double largeDesktopBreakpoint = 1400;
+  static const double extraLargeDesktopBreakpoint = 1700;
 
   static bool isMobile(BuildContext context) {
     return MediaQuery.of(context).size.width < mobileBreakpoint;
@@ -35,13 +37,17 @@ class ResponsiveUtils {
     final width = getScreenWidth(context);
 
     if (width < mobileBreakpoint) {
+      // Mobile: 1 column
       return 1;
     } else if (width < tabletBreakpoint) {
+      // Tablet: 2 columns
       return 2;
     } else if (width < desktopBreakpoint) {
+      // Small desktop: 3 columns
       return 3;
     } else {
-      return maxColumns;
+      // Desktop: 4 columns (or maxColumns if less)
+      return maxColumns.clamp(1, 4);
     }
   }
 

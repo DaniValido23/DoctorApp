@@ -24,6 +24,7 @@ class AutocompleteField extends StatefulWidget {
 }
 
 class _AutocompleteFieldState extends State<AutocompleteField> {
+  TextEditingController? _fieldController;
 
   @override
   Widget build(BuildContext context) {
@@ -59,9 +60,13 @@ class _AutocompleteFieldState extends State<AutocompleteField> {
       onSelected: (String selection) {
         SchedulerBinding.instance.addPostFrameCallback((_) {
           widget.onItemAdded(selection);
+          if (_fieldController != null) {
+            _fieldController!.clear();
+          }
         });
       },
       fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+        _fieldController = controller;
         return TextFormField(
           controller: controller,
           focusNode: focusNode,

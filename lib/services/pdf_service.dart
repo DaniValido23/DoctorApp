@@ -2,17 +2,18 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:path_provider/path_provider.dart';
 import 'package:printing/printing.dart';
-import 'package:doctor_app/data/models/patient.dart';
-import 'package:doctor_app/data/models/consultation.dart';
-import 'package:doctor_app/data/models/doctor_settings.dart';
-import 'package:doctor_app/data/models/medication.dart';
+import 'package:doctor_app/data/models/models.dart';
+import 'package:doctor_app/services/services.dart';
 
 class PDFService {
   static const double pageWidth = 21.0 * PdfPageFormat.cm; // Letter size width
   static const double pageHeight = 27.9 * PdfPageFormat.cm; // Letter size height
   static const PdfPageFormat letterFormat = PdfPageFormat(pageWidth, pageHeight);
+
+  // Hardcoded doctor information
+  static const String hardcodedDoctorName = 'Dr. José Luis Martínez';
+  static const String hardcodedMedicalSchool = 'Universidad Nacional Autónoma de México (UNAM)';
 
   /// Generate prescription PDF for a patient consultation
   Future<Uint8List> generatePrescriptionPDF({
@@ -99,8 +100,8 @@ class PDFService {
                 pw.SizedBox(height: 15),
               ],
 
-              // Weight information
-              _buildWeightInfo(consultation.weight),
+              // Vital signs information
+              _buildVitalSignsInfo(consultation),
 
               pw.Spacer(),
 
@@ -128,7 +129,7 @@ class PDFService {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                doctorSettings.doctorName,
+                hardcodedDoctorName,
                 style: pw.TextStyle(
                   fontSize: 18,
                   fontWeight: pw.FontWeight.bold,
@@ -142,9 +143,28 @@ class PDFService {
                 ),
               ),
               pw.Text(
-                'Licencia: ${doctorSettings.licenseNumber}',
+                hardcodedMedicalSchool,
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  fontStyle: pw.FontStyle.italic,
+                  color: PdfColors.grey700,
+                ),
+              ),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                'Cédula Profesional: ${doctorSettings.licenseNumber}',
                 style: const pw.TextStyle(fontSize: 12),
               ),
+              if (doctorSettings.titles != null && doctorSettings.titles!.isNotEmpty) ...[
+                pw.SizedBox(height: 3),
+                pw.Text(
+                  doctorSettings.titles!,
+                  style: pw.TextStyle(
+                    fontSize: 11,
+                    color: PdfColors.grey600,
+                  ),
+                ),
+              ],
               if (doctorSettings.clinicName != null) ...[
                 pw.SizedBox(height: 5),
                 pw.Text(
@@ -366,41 +386,117 @@ class PDFService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text(
-          'OBSERVACIONES',
-          style: pw.TextStyle(
-            fontSize: 14,
-            fontWeight: pw.FontWeight.bold,
-          ),
+        pw.Row(
+          children: [
+            pw.Icon(
+              pw.IconData(0xe8b9), // notes icon
+              size: 16,
+              color: PdfColors.grey700,
+            ),
+            pw.SizedBox(width: 8),
+            pw.Text(
+              'OBSERVACIONES MÉDICAS',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.grey800,
+              ),
+            ),
+          ],
         ),
-        pw.SizedBox(height: 5),
+        pw.SizedBox(height: 8),
         pw.Container(
           width: double.infinity,
-          padding: const pw.EdgeInsets.all(10),
+          padding: const pw.EdgeInsets.all(12),
           decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: PdfColors.grey300),
-            borderRadius: pw.BorderRadius.circular(5),
+            color: PdfColors.grey50,
+            border: pw.Border.all(color: PdfColors.grey400, width: 1),
+            borderRadius: pw.BorderRadius.circular(8),
           ),
           child: pw.Text(
             observations,
-            style: const pw.TextStyle(fontSize: 12),
+            style: pw.TextStyle(
+              fontSize: 12,
+              lineSpacing: 1.4,
+              color: PdfColors.grey800,
+            ),
           ),
         ),
       ],
     );
   }
 
-  /// Build weight information
-  pw.Widget _buildWeightInfo(double weight) {
+  /// Build vital signs information
+  pw.Widget _buildVitalSignsInfo(Consultation consultation) {
+    final vitalSigns = <String>[];
+
+    // Add vital signs if they exist
+    if (consultation.bodyTemperature != null) {
+      vitalSigns.add('Temperatura: ${consultation.bodyTemperature!.toStringAsFixed(1)}°C');
+    }
+
+    if (consultation.bloodPressureSystolic != null && consultation.bloodPressureDiastolic != null) {
+      vitalSigns.add('Presión Arterial: ${consultation.bloodPressureSystolic}/${consultation.bloodPressureDiastolic} mmHg');
+    }
+
+    if (consultation.oxygenSaturation != null) {
+      vitalSigns.add('Saturación de O₂: ${consultation.oxygenSaturation!.toStringAsFixed(1)}%');
+    }
+
+    if (consultation.weight != null) {
+      vitalSigns.add('Peso: ${consultation.weight!.toStringAsFixed(1)} kg');
+    }
+
+    if (consultation.height != null) {
+      vitalSigns.add('Altura: ${consultation.height!.toStringAsFixed(0)} cm');
+    }
+
+    // If no vital signs are recorded, don't display the section
+    if (vitalSigns.isEmpty) {
+      return pw.SizedBox.shrink();
+    }
+
     return pw.Container(
-      padding: const pw.EdgeInsets.all(8),
+      padding: const pw.EdgeInsets.all(12),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey300),
-        borderRadius: pw.BorderRadius.circular(5),
+        color: PdfColors.blue50,
+        border: pw.Border.all(color: PdfColors.blue300),
+        borderRadius: pw.BorderRadius.circular(8),
       ),
-      child: pw.Text(
-        'Peso registrado: ${weight.toStringAsFixed(1)} kg',
-        style: const pw.TextStyle(fontSize: 12),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Row(
+            children: [
+              pw.Icon(
+                pw.IconData(0xe8b6), // monitor_heart icon
+                size: 16,
+                color: PdfColors.blue700,
+              ),
+              pw.SizedBox(width: 8),
+              pw.Text(
+                'SIGNOS VITALES',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.blue800,
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 8),
+          pw.Wrap(
+            spacing: 20,
+            runSpacing: 6,
+            children: vitalSigns.map((sign) => pw.Text(
+              sign,
+              style: pw.TextStyle(
+                fontSize: 12,
+                color: PdfColors.grey800,
+              ),
+            )).toList(),
+          ),
+        ],
       ),
     );
   }
@@ -416,7 +512,7 @@ class PDFService {
         ),
         pw.SizedBox(height: 5),
         pw.Text(
-          doctorSettings.doctorName,
+          hardcodedDoctorName,
           style: pw.TextStyle(
             fontSize: 12,
             fontWeight: pw.FontWeight.bold,
@@ -427,7 +523,7 @@ class PDFService {
           style: const pw.TextStyle(fontSize: 10),
         ),
         pw.Text(
-          'Licencia: ${doctorSettings.licenseNumber}',
+          'Cédula Profesional: ${doctorSettings.licenseNumber}',
           style: const pw.TextStyle(fontSize: 10),
         ),
       ],
@@ -444,10 +540,10 @@ class PDFService {
     return '${date.day} de ${months[date.month - 1]} de ${date.year}';
   }
 
-  /// Save PDF to device storage
-  Future<String> savePDFToStorage(Uint8List pdfBytes, String fileName) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/$fileName');
+  /// Save PDF to consultation folder in organized structure
+  Future<String> savePDFToStorage(Uint8List pdfBytes, String fileName, Patient patient, DateTime consultationDate) async {
+    final filePath = await FileOrganizationService.getConsultationFilePath(patient, consultationDate, fileName);
+    final file = File(filePath);
     await file.writeAsBytes(pdfBytes);
     return file.path;
   }

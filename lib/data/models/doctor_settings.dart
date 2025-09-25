@@ -14,6 +14,8 @@ class DoctorSettings with _$DoctorSettings {
     String? phone,
     String? email,
     String? logoPath,
+    String? titles,  // Títulos, diplomados y especialidades
+    String? medicalSchool,  // Escuela de medicina (aunque será hardcodeado)
   }) = _DoctorSettings;
 
   factory DoctorSettings.fromJson(Map<String, dynamic> json) => _$DoctorSettingsFromJson(json);

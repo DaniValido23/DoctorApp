@@ -120,38 +120,6 @@ class _DiagnosisFormState extends State<DiagnosisForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            children: [
-              Icon(
-                Icons.medical_services,
-                color: Theme.of(context).colorScheme.primary,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Diagnósticos Médicos',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Establece los diagnósticos basados en la evaluación clínica',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
           // Autocomplete field
           AutocompleteField(
             labelText: 'Agregar diagnóstico',

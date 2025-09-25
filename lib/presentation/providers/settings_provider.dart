@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:doctor_app/data/models/doctor_settings.dart';
-import 'package:doctor_app/data/repositories/settings_repository.dart';
+import 'package:doctor_app/data/repositories/repositories.dart';
 
 class SettingsNotifier extends StateNotifier<AsyncValue<DoctorSettings?>> {
   final SettingsRepository _repository;

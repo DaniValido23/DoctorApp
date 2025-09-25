@@ -1,6 +1,6 @@
 class DatabaseConstants {
   static const String databaseName = 'doctor_app.db';
-  static const int databaseVersion = 2;
+  static const int databaseVersion = 3;
 
   // Table names
   static const String patientsTable = 'patients';
@@ -30,7 +30,14 @@ class DatabaseConstants {
   // Consultations table columns
   static const String columnConsultationPatientId = 'patient_id';
   static const String columnConsultationDate = 'date';
+  // Vital Signs (all optional)
+  static const String columnConsultationBodyTemperature = 'body_temperature';
+  static const String columnConsultationBloodPressureSystolic = 'blood_pressure_systolic';
+  static const String columnConsultationBloodPressureDiastolic = 'blood_pressure_diastolic';
+  static const String columnConsultationOxygenSaturation = 'oxygen_saturation';
   static const String columnConsultationWeight = 'weight';
+  static const String columnConsultationHeight = 'height';
+  // Other fields
   static const String columnConsultationObservations = 'observations';
   static const String columnConsultationPrice = 'price';
   static const String columnConsultationPdfPath = 'pdf_path';

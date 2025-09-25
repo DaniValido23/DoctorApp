@@ -23,14 +23,21 @@ Consultation _$ConsultationFromJson(Map<String, dynamic> json) {
 mixin _$Consultation {
   int? get id => throw _privateConstructorUsedError;
   int get patientId => throw _privateConstructorUsedError;
-  DateTime get date => throw _privateConstructorUsedError;
+  DateTime get date =>
+      throw _privateConstructorUsedError; // Vital Signs (all optional except legacy weight handling)
+  double? get bodyTemperature => throw _privateConstructorUsedError; // °C
+  int? get bloodPressureSystolic => throw _privateConstructorUsedError; // mmHg
+  int? get bloodPressureDiastolic => throw _privateConstructorUsedError; // mmHg
+  double? get oxygenSaturation => throw _privateConstructorUsedError; // %
+  double? get weight => throw _privateConstructorUsedError; // kg (now optional)
+  double? get height => throw _privateConstructorUsedError; // cm
+  // Medical Information
   List<String> get symptoms => throw _privateConstructorUsedError;
+  List<String> get diagnoses => throw _privateConstructorUsedError;
   List<Medication> get medications => throw _privateConstructorUsedError;
   List<String> get treatments => throw _privateConstructorUsedError;
-  List<String> get diagnoses => throw _privateConstructorUsedError;
-  double get weight => throw _privateConstructorUsedError;
-  String? get observations => throw _privateConstructorUsedError;
   List<Attachment> get attachments => throw _privateConstructorUsedError;
+  String? get observations => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
   String? get pdfPath => throw _privateConstructorUsedError;
 
@@ -55,13 +62,18 @@ abstract class $ConsultationCopyWith<$Res> {
     int? id,
     int patientId,
     DateTime date,
+    double? bodyTemperature,
+    int? bloodPressureSystolic,
+    int? bloodPressureDiastolic,
+    double? oxygenSaturation,
+    double? weight,
+    double? height,
     List<String> symptoms,
+    List<String> diagnoses,
     List<Medication> medications,
     List<String> treatments,
-    List<String> diagnoses,
-    double weight,
-    String? observations,
     List<Attachment> attachments,
+    String? observations,
     double price,
     String? pdfPath,
   });
@@ -85,13 +97,18 @@ class _$ConsultationCopyWithImpl<$Res, $Val extends Consultation>
     Object? id = freezed,
     Object? patientId = null,
     Object? date = null,
+    Object? bodyTemperature = freezed,
+    Object? bloodPressureSystolic = freezed,
+    Object? bloodPressureDiastolic = freezed,
+    Object? oxygenSaturation = freezed,
+    Object? weight = freezed,
+    Object? height = freezed,
     Object? symptoms = null,
+    Object? diagnoses = null,
     Object? medications = null,
     Object? treatments = null,
-    Object? diagnoses = null,
-    Object? weight = null,
-    Object? observations = freezed,
     Object? attachments = null,
+    Object? observations = freezed,
     Object? price = null,
     Object? pdfPath = freezed,
   }) {
@@ -109,9 +126,37 @@ class _$ConsultationCopyWithImpl<$Res, $Val extends Consultation>
                 ? _value.date
                 : date // ignore: cast_nullable_to_non_nullable
                       as DateTime,
+            bodyTemperature: freezed == bodyTemperature
+                ? _value.bodyTemperature
+                : bodyTemperature // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            bloodPressureSystolic: freezed == bloodPressureSystolic
+                ? _value.bloodPressureSystolic
+                : bloodPressureSystolic // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            bloodPressureDiastolic: freezed == bloodPressureDiastolic
+                ? _value.bloodPressureDiastolic
+                : bloodPressureDiastolic // ignore: cast_nullable_to_non_nullable
+                      as int?,
+            oxygenSaturation: freezed == oxygenSaturation
+                ? _value.oxygenSaturation
+                : oxygenSaturation // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            weight: freezed == weight
+                ? _value.weight
+                : weight // ignore: cast_nullable_to_non_nullable
+                      as double?,
+            height: freezed == height
+                ? _value.height
+                : height // ignore: cast_nullable_to_non_nullable
+                      as double?,
             symptoms: null == symptoms
                 ? _value.symptoms
                 : symptoms // ignore: cast_nullable_to_non_nullable
+                      as List<String>,
+            diagnoses: null == diagnoses
+                ? _value.diagnoses
+                : diagnoses // ignore: cast_nullable_to_non_nullable
                       as List<String>,
             medications: null == medications
                 ? _value.medications
@@ -121,22 +166,14 @@ class _$ConsultationCopyWithImpl<$Res, $Val extends Consultation>
                 ? _value.treatments
                 : treatments // ignore: cast_nullable_to_non_nullable
                       as List<String>,
-            diagnoses: null == diagnoses
-                ? _value.diagnoses
-                : diagnoses // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
-            weight: null == weight
-                ? _value.weight
-                : weight // ignore: cast_nullable_to_non_nullable
-                      as double,
-            observations: freezed == observations
-                ? _value.observations
-                : observations // ignore: cast_nullable_to_non_nullable
-                      as String?,
             attachments: null == attachments
                 ? _value.attachments
                 : attachments // ignore: cast_nullable_to_non_nullable
                       as List<Attachment>,
+            observations: freezed == observations
+                ? _value.observations
+                : observations // ignore: cast_nullable_to_non_nullable
+                      as String?,
             price: null == price
                 ? _value.price
                 : price // ignore: cast_nullable_to_non_nullable
@@ -164,13 +201,18 @@ abstract class _$$ConsultationImplCopyWith<$Res>
     int? id,
     int patientId,
     DateTime date,
+    double? bodyTemperature,
+    int? bloodPressureSystolic,
+    int? bloodPressureDiastolic,
+    double? oxygenSaturation,
+    double? weight,
+    double? height,
     List<String> symptoms,
+    List<String> diagnoses,
     List<Medication> medications,
     List<String> treatments,
-    List<String> diagnoses,
-    double weight,
-    String? observations,
     List<Attachment> attachments,
+    String? observations,
     double price,
     String? pdfPath,
   });
@@ -193,13 +235,18 @@ class __$$ConsultationImplCopyWithImpl<$Res>
     Object? id = freezed,
     Object? patientId = null,
     Object? date = null,
+    Object? bodyTemperature = freezed,
+    Object? bloodPressureSystolic = freezed,
+    Object? bloodPressureDiastolic = freezed,
+    Object? oxygenSaturation = freezed,
+    Object? weight = freezed,
+    Object? height = freezed,
     Object? symptoms = null,
+    Object? diagnoses = null,
     Object? medications = null,
     Object? treatments = null,
-    Object? diagnoses = null,
-    Object? weight = null,
-    Object? observations = freezed,
     Object? attachments = null,
+    Object? observations = freezed,
     Object? price = null,
     Object? pdfPath = freezed,
   }) {
@@ -217,9 +264,37 @@ class __$$ConsultationImplCopyWithImpl<$Res>
             ? _value.date
             : date // ignore: cast_nullable_to_non_nullable
                   as DateTime,
+        bodyTemperature: freezed == bodyTemperature
+            ? _value.bodyTemperature
+            : bodyTemperature // ignore: cast_nullable_to_non_nullable
+                  as double?,
+        bloodPressureSystolic: freezed == bloodPressureSystolic
+            ? _value.bloodPressureSystolic
+            : bloodPressureSystolic // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        bloodPressureDiastolic: freezed == bloodPressureDiastolic
+            ? _value.bloodPressureDiastolic
+            : bloodPressureDiastolic // ignore: cast_nullable_to_non_nullable
+                  as int?,
+        oxygenSaturation: freezed == oxygenSaturation
+            ? _value.oxygenSaturation
+            : oxygenSaturation // ignore: cast_nullable_to_non_nullable
+                  as double?,
+        weight: freezed == weight
+            ? _value.weight
+            : weight // ignore: cast_nullable_to_non_nullable
+                  as double?,
+        height: freezed == height
+            ? _value.height
+            : height // ignore: cast_nullable_to_non_nullable
+                  as double?,
         symptoms: null == symptoms
             ? _value._symptoms
             : symptoms // ignore: cast_nullable_to_non_nullable
+                  as List<String>,
+        diagnoses: null == diagnoses
+            ? _value._diagnoses
+            : diagnoses // ignore: cast_nullable_to_non_nullable
                   as List<String>,
         medications: null == medications
             ? _value._medications
@@ -229,22 +304,14 @@ class __$$ConsultationImplCopyWithImpl<$Res>
             ? _value._treatments
             : treatments // ignore: cast_nullable_to_non_nullable
                   as List<String>,
-        diagnoses: null == diagnoses
-            ? _value._diagnoses
-            : diagnoses // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
-        weight: null == weight
-            ? _value.weight
-            : weight // ignore: cast_nullable_to_non_nullable
-                  as double,
-        observations: freezed == observations
-            ? _value.observations
-            : observations // ignore: cast_nullable_to_non_nullable
-                  as String?,
         attachments: null == attachments
             ? _value._attachments
             : attachments // ignore: cast_nullable_to_non_nullable
                   as List<Attachment>,
+        observations: freezed == observations
+            ? _value.observations
+            : observations // ignore: cast_nullable_to_non_nullable
+                  as String?,
         price: null == price
             ? _value.price
             : price // ignore: cast_nullable_to_non_nullable
@@ -265,19 +332,24 @@ class _$ConsultationImpl implements _Consultation {
     this.id,
     required this.patientId,
     required this.date,
+    this.bodyTemperature,
+    this.bloodPressureSystolic,
+    this.bloodPressureDiastolic,
+    this.oxygenSaturation,
+    this.weight,
+    this.height,
     required final List<String> symptoms,
+    required final List<String> diagnoses,
     required final List<Medication> medications,
     required final List<String> treatments,
-    required final List<String> diagnoses,
-    required this.weight,
-    this.observations,
     required final List<Attachment> attachments,
+    this.observations,
     required this.price,
     this.pdfPath,
   }) : _symptoms = symptoms,
+       _diagnoses = diagnoses,
        _medications = medications,
        _treatments = treatments,
-       _diagnoses = diagnoses,
        _attachments = attachments;
 
   factory _$ConsultationImpl.fromJson(Map<String, dynamic> json) =>
@@ -289,12 +361,42 @@ class _$ConsultationImpl implements _Consultation {
   final int patientId;
   @override
   final DateTime date;
+  // Vital Signs (all optional except legacy weight handling)
+  @override
+  final double? bodyTemperature;
+  // °C
+  @override
+  final int? bloodPressureSystolic;
+  // mmHg
+  @override
+  final int? bloodPressureDiastolic;
+  // mmHg
+  @override
+  final double? oxygenSaturation;
+  // %
+  @override
+  final double? weight;
+  // kg (now optional)
+  @override
+  final double? height;
+  // cm
+  // Medical Information
   final List<String> _symptoms;
+  // cm
+  // Medical Information
   @override
   List<String> get symptoms {
     if (_symptoms is EqualUnmodifiableListView) return _symptoms;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_symptoms);
+  }
+
+  final List<String> _diagnoses;
+  @override
+  List<String> get diagnoses {
+    if (_diagnoses is EqualUnmodifiableListView) return _diagnoses;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_diagnoses);
   }
 
   final List<Medication> _medications;
@@ -313,18 +415,6 @@ class _$ConsultationImpl implements _Consultation {
     return EqualUnmodifiableListView(_treatments);
   }
 
-  final List<String> _diagnoses;
-  @override
-  List<String> get diagnoses {
-    if (_diagnoses is EqualUnmodifiableListView) return _diagnoses;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_diagnoses);
-  }
-
-  @override
-  final double weight;
-  @override
-  final String? observations;
   final List<Attachment> _attachments;
   @override
   List<Attachment> get attachments {
@@ -334,13 +424,15 @@ class _$ConsultationImpl implements _Consultation {
   }
 
   @override
+  final String? observations;
+  @override
   final double price;
   @override
   final String? pdfPath;
 
   @override
   String toString() {
-    return 'Consultation(id: $id, patientId: $patientId, date: $date, symptoms: $symptoms, medications: $medications, treatments: $treatments, diagnoses: $diagnoses, weight: $weight, observations: $observations, attachments: $attachments, price: $price, pdfPath: $pdfPath)';
+    return 'Consultation(id: $id, patientId: $patientId, date: $date, bodyTemperature: $bodyTemperature, bloodPressureSystolic: $bloodPressureSystolic, bloodPressureDiastolic: $bloodPressureDiastolic, oxygenSaturation: $oxygenSaturation, weight: $weight, height: $height, symptoms: $symptoms, diagnoses: $diagnoses, medications: $medications, treatments: $treatments, attachments: $attachments, observations: $observations, price: $price, pdfPath: $pdfPath)';
   }
 
   @override
@@ -352,7 +444,21 @@ class _$ConsultationImpl implements _Consultation {
             (identical(other.patientId, patientId) ||
                 other.patientId == patientId) &&
             (identical(other.date, date) || other.date == date) &&
+            (identical(other.bodyTemperature, bodyTemperature) ||
+                other.bodyTemperature == bodyTemperature) &&
+            (identical(other.bloodPressureSystolic, bloodPressureSystolic) ||
+                other.bloodPressureSystolic == bloodPressureSystolic) &&
+            (identical(other.bloodPressureDiastolic, bloodPressureDiastolic) ||
+                other.bloodPressureDiastolic == bloodPressureDiastolic) &&
+            (identical(other.oxygenSaturation, oxygenSaturation) ||
+                other.oxygenSaturation == oxygenSaturation) &&
+            (identical(other.weight, weight) || other.weight == weight) &&
+            (identical(other.height, height) || other.height == height) &&
             const DeepCollectionEquality().equals(other._symptoms, _symptoms) &&
+            const DeepCollectionEquality().equals(
+              other._diagnoses,
+              _diagnoses,
+            ) &&
             const DeepCollectionEquality().equals(
               other._medications,
               _medications,
@@ -362,16 +468,11 @@ class _$ConsultationImpl implements _Consultation {
               _treatments,
             ) &&
             const DeepCollectionEquality().equals(
-              other._diagnoses,
-              _diagnoses,
-            ) &&
-            (identical(other.weight, weight) || other.weight == weight) &&
-            (identical(other.observations, observations) ||
-                other.observations == observations) &&
-            const DeepCollectionEquality().equals(
               other._attachments,
               _attachments,
             ) &&
+            (identical(other.observations, observations) ||
+                other.observations == observations) &&
             (identical(other.price, price) || other.price == price) &&
             (identical(other.pdfPath, pdfPath) || other.pdfPath == pdfPath));
   }
@@ -383,13 +484,18 @@ class _$ConsultationImpl implements _Consultation {
     id,
     patientId,
     date,
+    bodyTemperature,
+    bloodPressureSystolic,
+    bloodPressureDiastolic,
+    oxygenSaturation,
+    weight,
+    height,
     const DeepCollectionEquality().hash(_symptoms),
+    const DeepCollectionEquality().hash(_diagnoses),
     const DeepCollectionEquality().hash(_medications),
     const DeepCollectionEquality().hash(_treatments),
-    const DeepCollectionEquality().hash(_diagnoses),
-    weight,
-    observations,
     const DeepCollectionEquality().hash(_attachments),
+    observations,
     price,
     pdfPath,
   );
@@ -413,13 +519,18 @@ abstract class _Consultation implements Consultation {
     final int? id,
     required final int patientId,
     required final DateTime date,
+    final double? bodyTemperature,
+    final int? bloodPressureSystolic,
+    final int? bloodPressureDiastolic,
+    final double? oxygenSaturation,
+    final double? weight,
+    final double? height,
     required final List<String> symptoms,
+    required final List<String> diagnoses,
     required final List<Medication> medications,
     required final List<String> treatments,
-    required final List<String> diagnoses,
-    required final double weight,
-    final String? observations,
     required final List<Attachment> attachments,
+    final String? observations,
     required final double price,
     final String? pdfPath,
   }) = _$ConsultationImpl;
@@ -432,21 +543,32 @@ abstract class _Consultation implements Consultation {
   @override
   int get patientId;
   @override
-  DateTime get date;
+  DateTime get date; // Vital Signs (all optional except legacy weight handling)
+  @override
+  double? get bodyTemperature; // °C
+  @override
+  int? get bloodPressureSystolic; // mmHg
+  @override
+  int? get bloodPressureDiastolic; // mmHg
+  @override
+  double? get oxygenSaturation; // %
+  @override
+  double? get weight; // kg (now optional)
+  @override
+  double? get height; // cm
+  // Medical Information
   @override
   List<String> get symptoms;
+  @override
+  List<String> get diagnoses;
   @override
   List<Medication> get medications;
   @override
   List<String> get treatments;
   @override
-  List<String> get diagnoses;
-  @override
-  double get weight;
+  List<Attachment> get attachments;
   @override
   String? get observations;
-  @override
-  List<Attachment> get attachments;
   @override
   double get price;
   @override

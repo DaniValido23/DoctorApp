@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:doctor_app/data/models/medication.dart';
-import 'package:doctor_app/presentation/widgets/autocomplete_field.dart';
 
 class MedicationForm extends StatefulWidget {
   final List<Medication> initialMedications;
@@ -19,6 +17,7 @@ class MedicationForm extends StatefulWidget {
 
 class _MedicationFormState extends State<MedicationForm> {
   late List<Medication> _medications;
+  final List<_MedicationRowControllers> _controllers = [];
 
   // Sugerencias comunes de medicamentos
   static const List<String> _commonMedications = [
@@ -26,440 +25,309 @@ class _MedicationFormState extends State<MedicationForm> {
     'Ibuprofeno',
     'Aspirina',
     'Amoxicilina',
-    'Azitromicina',
-    'Ciprofloxacino',
     'Omeprazol',
-    'Ranitidina',
-    'Loratadina',
-    'Cetirizina',
-    'Salbutamol',
-    'Prednisolona',
-    'Metformina',
     'Losartán',
-    'Enalapril',
+    'Metformina',
     'Atorvastatina',
-    'Simvastatina',
-    'Furosemida',
-    'Hidroclorotiazida',
-    'Captopril',
     'Amlodipino',
-    'Metropolol',
-    'Propranolol',
-    'Warfarina',
-    'Clopidogrel',
-    'Insulina',
-    'Glibenclamida',
     'Levotiroxina',
     'Diclofenaco',
+    'Acetaminofén',
     'Naproxeno',
-    'Ketorolaco',
-    'Tramadol',
-    'Morfina',
-    'Codeína',
+    'Prednisona',
+    'Furosemida',
+    'Captopril',
+    'Enalapril',
+    'Simvastatina',
+    'Ranitidina',
+    'Ciprofloxacino',
+    'Azitromicina',
     'Dexametasona',
-    'Betametasona',
-    'Hidrocortisona',
-    'Fluticasona',
-    'Budesonida',
-    'Montelukast',
+    'Hidroclorotiazida',
+    'Propranolol',
+    'Digoxina',
   ];
 
+  // Sugerencias comunes de dosis
+  static const List<String> _commonDosages = [
+    '100mg',
+    '250mg',
+    '500mg',
+    '750mg',
+    '1g',
+    '1.5g',
+    '2g',
+    '5ml',
+    '10ml',
+    '15ml',
+    '20ml',
+    '50ml',
+    '100ml',
+    '1 tableta',
+    '2 tabletas',
+    '1/2 tableta',
+    '1 cápsula',
+    '2 cápsulas',
+    '1 sobre',
+    '1 ampolla',
+    '2.5mg',
+    '5mg',
+    '10mg',
+    '20mg',
+    '25mg',
+    '50mg',
+  ];
+
+  // Sugerencias comunes de frecuencia
   static const List<String> _commonFrequencies = [
+    'Cada 4 horas',
+    'Cada 6 horas',
     'Cada 8 horas',
     'Cada 12 horas',
+    'Una vez al día',
+    'Dos veces al día',
+    'Tres veces al día',
+    'Cuatro veces al día',
     'Cada 24 horas',
-    '2 veces al día',
-    '3 veces al día',
-    '1 vez al día',
-    'Cada 6 horas',
-    'Cada 4 horas',
-    'Cuando sea necesario',
     'En ayunas',
-    'Después de las comidas',
+    'Con las comidas',
     'Antes de dormir',
-    'Al despertar',
+    'Al desayuno',
+    'Al almuerzo',
+    'A la cena',
+    'Cada mañana',
+    'Cada noche',
+    'Solo por necesidad',
+    'Cada 2 horas',
+    'Cada 3 horas',
   ];
+
+  // Sugerencias comunes de duración/instrucciones
+  static const List<String> _commonInstructions = [
+    '7 días',
+    '10 días',
+    '14 días',
+    '21 días',
+    '1 mes',
+    '2 meses',
+    '3 meses',
+    'Con alimentos',
+    'Sin alimentos',
+    'Con abundante agua',
+    'Antes de las comidas',
+    'Después de las comidas',
+    'En ayunas',
+    'No masticar',
+    'Disolver en agua',
+    'Aplicar sobre la piel',
+    'Hasta mejoría',
+    'Según síntomas',
+    'Solo si es necesario',
+    'Continuar hasta nueva orden',
+    'Suspender gradualmente',
+    '5 días',
+    '15 días',
+    '30 días',
+    '6 meses',
+  ];
+
 
   @override
   void initState() {
     super.initState();
     _medications = List.from(widget.initialMedications);
+
+    // Inicializar controllers para medicamentos existentes
+    for (int i = 0; i < _medications.length; i++) {
+      final medication = _medications[i];
+      final controllers = _MedicationRowControllers();
+      controllers.nameController.text = medication.name;
+      controllers.dosageController.text = medication.dosage;
+      controllers.frequencyController.text = medication.frequency;
+      controllers.instructionsController.text = medication.instructions ?? '';
+      _controllers.add(controllers);
+    }
+
+    // Siempre asegurar que hay al menos una fila de campos
+    if (_controllers.isEmpty) {
+      _controllers.add(_MedicationRowControllers());
+    }
   }
 
-  void _addMedication() {
-    showDialog(
-      context: context,
-      builder: (context) => _MedicationDialog(
-        onMedicationAdded: (medication) {
-          setState(() {
-            _medications.add(medication);
-          });
-          widget.onMedicationsChanged(_medications);
-        },
-      ),
-    );
-  }
-
-  void _editMedication(int index) {
-    showDialog(
-      context: context,
-      builder: (context) => _MedicationDialog(
-        medication: _medications[index],
-        onMedicationAdded: (medication) {
-          setState(() {
-            _medications[index] = medication;
-          });
-          widget.onMedicationsChanged(_medications);
-        },
-      ),
-    );
-  }
-
-  void _removeMedication(int index) {
+  void _addNewMedicationRow() {
     setState(() {
-      _medications.removeAt(index);
+      _controllers.add(_MedicationRowControllers());
     });
+  }
+
+  void _removeMedicationRow(int index) {
+    if (_controllers.length > 1) {
+      setState(() {
+        _controllers[index].dispose();
+        _controllers.removeAt(index);
+        _updateMedications();
+      });
+    }
+  }
+
+  void _updateMedications() {
+    final medications = <Medication>[];
+
+    for (int i = 0; i < _controllers.length; i++) {
+      final controller = _controllers[i];
+      final name = controller.nameController.text.trim();
+      final dosage = controller.dosageController.text.trim();
+      final frequency = controller.frequencyController.text.trim();
+      final instructions = controller.instructionsController.text.trim();
+
+      // Solo agregar si al menos el nombre está lleno
+      if (name.isNotEmpty) {
+        medications.add(Medication(
+          id: i < _medications.length ? _medications[i].id : null,
+          name: name,
+          dosage: dosage.isEmpty ? 'No especificada' : dosage,
+          frequency: frequency.isEmpty ? 'No especificada' : frequency,
+          instructions: instructions.isEmpty ? null : instructions,
+        ));
+      }
+    }
+
+    _medications = medications;
     widget.onMedicationsChanged(_medications);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
       children: [
-        SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-          // Lista de medicamentos
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.4, // Fixed height
-            child: _medications.isEmpty
-                ? _buildEmptyState()
-                : _buildMedicationsList(),
-          ),
-            ],
+        // Lista scrollable de filas de medicamentos
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                ...List.generate(
+                  _controllers.length,
+                  (index) => _buildMedicationRow(index),
+                ),
+              ],
+            ),
           ),
         ),
-        // FloatingActionButton para agregar medicamentos
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: FloatingActionButton(
-            onPressed: _addMedication,
-            tooltip: 'Agregar medicamento',
-            child: const Icon(Icons.add),
+
+        // Botón para agregar nueva fila siempre al fondo
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: SizedBox(
+            width: 350,
+            child: OutlinedButton.icon(
+              onPressed: _addNewMedicationRow,
+              icon: const Icon(Icons.add, color: Colors.blue),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.blue),
+              ),
+              label: const Text('Agregar Medicamento', style: TextStyle(fontSize: 16, color: Colors.blue)),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
+  Widget _buildMedicationRow(int index) {
+    final controller = _controllers[index];
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.medication_outlined,
-              size: 64,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No hay medicamentos recetados',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Presiona "Agregar" para recetar medicamentos',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[500],
-              ),
-            ),
-          ],
-        ),
-      );
-  }
-
-  Widget _buildMedicationsList() {
-    return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header de la lista
-          Row(
-            children: [
-              Text(
-                'Medicamentos Recetados',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${_medications.length}',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Lista de medicamentos
-          SizedBox(
-            height: 200, // Fixed height for list
-            child: ListView.builder(
-              itemCount: _medications.length,
-              itemBuilder: (context, index) {
-                final medication = _medications[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                      child: Icon(
-                        Icons.medication,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                        size: 20,
-                      ),
-                    ),
-                    title: Text(
-                      medication.name,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Text('Dosis: ${medication.dosage}'),
-                        Text('Frecuencia: ${medication.frequency}'),
-                        if (medication.instructions?.isNotEmpty == true)
-                          Text('Instrucciones: ${medication.instructions}'),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _editMedication(index),
-                          tooltip: 'Editar medicamento',
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.delete_outline,
-                            color: Colors.red[400],
-                          ),
-                          onPressed: () => _showDeleteDialog(index, medication.name),
-                          tooltip: 'Eliminar medicamento',
-                        ),
-                      ],
-                    ),
-                    isThreeLine: medication.instructions?.isNotEmpty == true,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      );
-  }
-
-  Future<void> _showDeleteDialog(int index, String medicationName) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar Medicamento'),
-        content: Text('¿Eliminar "$medicationName" de la receta?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      _removeMedication(index);
-    }
-  }
-}
-
-class _MedicationDialog extends StatefulWidget {
-  final Medication? medication;
-  final Function(Medication) onMedicationAdded;
-
-  const _MedicationDialog({
-    this.medication,
-    required this.onMedicationAdded,
-  });
-
-  @override
-  State<_MedicationDialog> createState() => _MedicationDialogState();
-}
-
-class _MedicationDialogState extends State<_MedicationDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _dosageController = TextEditingController();
-  final _frequencyController = TextEditingController();
-  final _instructionsController = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.medication != null) {
-      _nameController.text = widget.medication!.name;
-      _dosageController.text = widget.medication!.dosage;
-      _frequencyController.text = widget.medication!.frequency;
-      _instructionsController.text = widget.medication!.instructions ?? '';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.7,
-        height: MediaQuery.of(context).size.height * 0.8,
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.95,
-          maxHeight: MediaQuery.of(context).size.height * 0.9,
-          minWidth: MediaQuery.of(context).size.width > 500 ? 500 : MediaQuery.of(context).size.width * 0.9,
-          minHeight: MediaQuery.of(context).size.height > 400 ? 400 : MediaQuery.of(context).size.height * 0.8,
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
+            // Header de la fila
             Row(
               children: [
                 Icon(
-                  Icons.medication,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 28,
+                  Icons.health_and_safety_outlined,
+                  color: Colors.blue,
+                  size: 20,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    widget.medication != null ? 'Editar Medicamento' : 'Agregar Medicamento',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                const SizedBox(width: 8),
+                Text(
+                  'Medicamento ${index + 1}',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
+                const Spacer(),
+                if (_controllers.length > 1)
+                  IconButton(
+                    onPressed: () => _removeMedicationRow(index),
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    tooltip: 'Eliminar medicamento',
+                  ),
               ],
             ),
-            const Divider(height: 32),
+            const SizedBox(height: 16),
 
-            // Content
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-              // Nombre del medicamento
-              AutocompleteField(
-                labelText: 'Nombre del medicamento *',
-                prefixIcon: Icons.medication,
-                suggestions: _MedicationFormState._commonMedications,
-                onItemAdded: (name) {
-                  SchedulerBinding.instance.addPostFrameCallback((_) {
-                    _nameController.text = name;
-                  });
-                },
-                hintText: 'Ej: Paracetamol',
-              ),
-              const SizedBox(height: 24),
-
-              // Dosis
-              TextFormField(
-                controller: _dosageController,
-                decoration: const InputDecoration(
-                  labelText: 'Dosis *',
-                  prefixIcon: Icon(Icons.straighten),
-                  border: OutlineInputBorder(),
-                  hintText: 'Ej: 500mg, 1 tableta',
-                ),
-                validator: (value) => value?.isEmpty == true ? 'Requerido' : null,
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 24),
-
-              // Frecuencia
-              AutocompleteField(
-                labelText: 'Frecuencia *',
-                prefixIcon: Icons.schedule,
-                suggestions: _MedicationFormState._commonFrequencies,
-                onItemAdded: (frequency) {
-                  SchedulerBinding.instance.addPostFrameCallback((_) {
-                    _frequencyController.text = frequency;
-                  });
-                },
-                hintText: 'Ej: Cada 8 horas',
-              ),
-              const SizedBox(height: 24),
-
-              // Instrucciones
-              TextFormField(
-                controller: _instructionsController,
-                decoration: const InputDecoration(
-                  labelText: 'Instrucciones (opcional)',
-                  prefixIcon: Icon(Icons.info_outline),
-                  border: OutlineInputBorder(),
-                  hintText: 'Ej: Tomar con alimentos',
-                ),
-                maxLines: 3,
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 32),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Actions
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            // Campos del medicamento
+            Column(
               children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancelar'),
+                // Fila 1: Nombre y Dosis
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: _buildAutocompleteField(
+                        controller: controller.nameController,
+                        labelText: 'Nombre del medicamento *',
+                        hintText: 'Ej: Paracetamol',
+                        prefixIcon: Icons.medication,
+                        suggestions: _commonMedications,
+                        onChanged: (_) => _updateMedications(),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: _buildAutocompleteField(
+                        controller: controller.dosageController,
+                        labelText: 'Dosis *',
+                        hintText: 'Ej: 500mg',
+                        prefixIcon: Icons.straighten,
+                        suggestions: _commonDosages,
+                        onChanged: (_) => _updateMedications(),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                FilledButton(
-                  onPressed: _saveMedication,
-                  child: const Text('Guardar'),
+                const SizedBox(height: 12),
+
+                // Fila 2: Frecuencia y Tiempo
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: _buildAutocompleteField(
+                        controller: controller.frequencyController,
+                        labelText: 'Frecuencia *',
+                        hintText: 'Ej: Cada 8 horas',
+                        prefixIcon: Icons.schedule,
+                        suggestions: _commonFrequencies,
+                        onChanged: (_) => _updateMedications(),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 1,
+                      child: _buildAutocompleteField(
+                        controller: controller.instructionsController,
+                        labelText: 'Tiempo/Instrucciones',
+                        hintText: 'Ej: Con alimentos',
+                        prefixIcon: Icons.info_outline,
+                        suggestions: _commonInstructions,
+                        onChanged: (_) => _updateMedications(),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -469,29 +337,157 @@ class _MedicationDialogState extends State<_MedicationDialog> {
     );
   }
 
-  void _saveMedication() {
-    if (_formKey.currentState!.validate() && _nameController.text.trim().isNotEmpty) {
-      final medication = Medication(
-        id: widget.medication?.id,
-        name: _nameController.text.trim(),
-        dosage: _dosageController.text.trim(),
-        frequency: _frequencyController.text.trim(),
-        instructions: _instructionsController.text.trim().isEmpty
-            ? null
-            : _instructionsController.text.trim(),
-      );
+  Widget _buildAutocompleteField({
+    required TextEditingController controller,
+    required String labelText,
+    required String hintText,
+    required IconData prefixIcon,
+    required List<String> suggestions,
+    required Function(String) onChanged,
+  }) {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return const Iterable<String>.empty();
+        }
 
-      widget.onMedicationAdded(medication);
-      Navigator.of(context).pop();
-    }
+        final filteredOptions = suggestions.where((String option) {
+          return option.toLowerCase().contains(textEditingValue.text.toLowerCase());
+        }).toList();
+
+        // Ordenar: coincidencias exactas primero, luego alfabéticamente
+        filteredOptions.sort((a, b) {
+          final aLower = a.toLowerCase();
+          final bLower = b.toLowerCase();
+          final queryLower = textEditingValue.text.toLowerCase();
+
+          // Si uno empieza con la query y el otro no
+          if (aLower.startsWith(queryLower) && !bLower.startsWith(queryLower)) {
+            return -1;
+          } else if (!aLower.startsWith(queryLower) && bLower.startsWith(queryLower)) {
+            return 1;
+          }
+
+          // Si ambos empiezan con la query o ninguno, ordenar alfabéticamente
+          return a.compareTo(b);
+        });
+
+        return filteredOptions.take(8); // Limitar a 8 sugerencias para no sobrecargar
+      },
+      onSelected: (String selection) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          controller.text = selection;
+          // Colocar el cursor al final del texto seleccionado
+          controller.selection = TextSelection.collapsed(offset: selection.length);
+          onChanged(selection);
+        });
+      },
+      fieldViewBuilder: (context, textEditingController, focusNode, onEditingComplete) {
+        // Sincronizar el controller externo con el interno del Autocomplete solo si es necesario
+        if (textEditingController.text != controller.text) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (textEditingController.text != controller.text) {
+              textEditingController.text = controller.text;
+              // Validar que la selección esté dentro de los límites del texto
+              final textLength = controller.text.length;
+              if (controller.selection.start <= textLength && controller.selection.end <= textLength) {
+                textEditingController.selection = controller.selection;
+              } else {
+                // Si la selección está fuera de los límites, colocar el cursor al final
+                textEditingController.selection = TextSelection.collapsed(offset: textLength);
+              }
+            }
+          });
+        }
+
+        return TextFormField(
+          controller: textEditingController,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            labelText: labelText,
+            hintText: hintText,
+            border: const OutlineInputBorder(),
+            prefixIcon: Icon(prefixIcon),
+          ),
+          onChanged: (value) {
+            // Usar addPostFrameCallback para evitar setState durante build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (controller.text != value) {
+                controller.text = value;
+                // Validar que la selección esté dentro de los límites del nuevo texto
+                final textLength = value.length;
+                final currentSelection = textEditingController.selection;
+                if (currentSelection.start <= textLength && currentSelection.end <= textLength) {
+                  controller.selection = currentSelection;
+                } else {
+                  controller.selection = TextSelection.collapsed(offset: textLength);
+                }
+                onChanged(value);
+              }
+            });
+          },
+          onEditingComplete: onEditingComplete,
+        );
+      },
+      optionsViewBuilder: (context, onSelected, options) {
+        return Align(
+          alignment: Alignment.topLeft,
+          child: Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(8),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxHeight: 200,
+                maxWidth: 300,
+              ),
+              child: ListView.builder(
+                padding: EdgeInsets.zero,
+                shrinkWrap: true,
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  final option = options.elementAt(index);
+                  return ListTile(
+                    dense: true,
+                    title: Text(
+                      option,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    leading: Icon(
+                      Icons.history,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    onTap: () => onSelected(option),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _dosageController.dispose();
-    _frequencyController.dispose();
-    _instructionsController.dispose();
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 }
+
+class _MedicationRowControllers {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController dosageController = TextEditingController();
+  final TextEditingController frequencyController = TextEditingController();
+  final TextEditingController instructionsController = TextEditingController();
+
+  void dispose() {
+    nameController.dispose();
+    dosageController.dispose();
+    frequencyController.dispose();
+    instructionsController.dispose();
+  }
+}
+

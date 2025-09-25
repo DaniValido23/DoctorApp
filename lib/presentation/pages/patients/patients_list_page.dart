@@ -39,9 +39,12 @@ class _PatientsListPageState extends ConsumerState<PatientsListPage> {
               )
             : const Text('Pacientes'),
         actions: [
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: _toggleSearch,
+          Padding(
+            padding: const EdgeInsets.only(right: 20),
+            child: IconButton(
+              icon: Icon(_isSearching ? Icons.close : Icons.search),
+              onPressed: _toggleSearch,
+            ),
           ),
         ],
       ),
@@ -51,9 +54,11 @@ class _PatientsListPageState extends ConsumerState<PatientsListPage> {
         error: (error, stackTrace) => _buildErrorWidget(error),
         data: (patients) => _buildPatientsList(patients),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: "add_patient_fab",
         onPressed: () => context.go('/patients/add'),
-        child: const Icon(Icons.add),
+        icon: const Icon(Icons.add),
+        label: const Text('Agregar Paciente'),
       ),
     );
   }
@@ -89,9 +94,13 @@ class _PatientsListPageState extends ConsumerState<PatientsListPage> {
   }
 
   Widget _buildPatientsList(List<Patient> patients) {
+    // Sort patients alphabetically by name
+    final sortedPatients = List<Patient>.from(patients)
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
     final displayPatients = _isSearching && _searchController.text.isNotEmpty
         ? _filteredPatients
-        : patients;
+        : sortedPatients;
 
     if (patients.isEmpty) {
       return _buildEmptyState();
@@ -135,10 +144,10 @@ class _PatientsListPageState extends ConsumerState<PatientsListPage> {
               child: GridView.builder(
                 padding: const EdgeInsets.all(16),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: ResponsiveUtils.getGridColumns(context, maxColumns: 3),
+                  crossAxisCount: ResponsiveUtils.getGridColumns(context, maxColumns: 4),
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  childAspectRatio: 1.2,
+                  childAspectRatio: 0.85,
                 ),
                 itemCount: displayPatients.length,
                 itemBuilder: (context, index) {
@@ -250,7 +259,8 @@ class _PatientsListPageState extends ConsumerState<PatientsListPage> {
             return patient.name.toLowerCase().contains(query.toLowerCase()) ||
                 patient.phone.contains(query) ||
                 (patient.email?.toLowerCase().contains(query.toLowerCase()) ?? false);
-          }).toList();
+          }).toList()
+            ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
         }
       });
     });

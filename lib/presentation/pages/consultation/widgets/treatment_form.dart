@@ -100,38 +100,6 @@ class _TreatmentFormState extends State<TreatmentForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            children: [
-              Icon(
-                Icons.healing,
-                color: Theme.of(context).colorScheme.primary,
-                size: 28,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Plan de Tratamiento',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      'Define el plan de tratamiento y cuidados para el paciente',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
           // Autocomplete field
           AutocompleteField(
             labelText: 'Agregar tratamiento',

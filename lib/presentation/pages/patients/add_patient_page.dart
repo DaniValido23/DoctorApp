@@ -61,7 +61,7 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
         ],
       ),
       body: ResponsiveContainer(
-        maxWidth: ResponsiveUtils.isDesktop(context) ? 800 : double.infinity,
+        maxWidth: ResponsiveUtils.isDesktop(context) ? 1000 : double.infinity,
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -69,183 +69,371 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-              // Información personal
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Información Personal',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+              // Diseño responsive para desktop
+              if (ResponsiveUtils.isDesktop(context))
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Información personal (lado izquierdo)
+                    Expanded(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Información Personal',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Nombre completo
+                              TextFormField(
+                                controller: _nameController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Nombre completo *',
+                                  prefixIcon: Icon(Icons.person),
+                                  border: OutlineInputBorder(),
+                                ),
+                                style: const TextStyle(fontSize: 16),
+                                textCapitalization: TextCapitalization.words,
+                                validator: _validateName,
+                                textInputAction: TextInputAction.next,
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Fecha de nacimiento
+                              TextFormField(
+                                controller: _birthDateController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Fecha de nacimiento *',
+                                  prefixIcon: Icon(Icons.cake),
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: Icon(Icons.calendar_today),
+                                ),
+                                style: const TextStyle(fontSize: 16),
+                                readOnly: true,
+                                onTap: _selectBirthDate,
+                                validator: _validateBirthDate,
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Género
+                              DropdownButtonFormField<String>(
+                                initialValue: _selectedGender,
+                                decoration: const InputDecoration(
+                                  labelText: 'Género *',
+                                  prefixIcon: Icon(Icons.wc),
+                                  border: OutlineInputBorder(),
+                                ),
+                                style: const TextStyle(fontSize: 16),
+                                items: ['Masculino', 'Femenino', 'Otro'].map((gender) {
+                                  return DropdownMenuItem(
+                                    value: gender,
+                                    child: Text(
+                                      gender,
+                                      style: TextStyle(
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.white
+                                            : Colors.black,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    setState(() => _selectedGender = value);
+                                  }
+                                },
+                                validator: (value) => value == null ? 'Selecciona un género' : null,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                    ),
+                    const SizedBox(width: 24),
 
-                      // Nombre completo
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nombre completo *',
-                          prefixIcon: Icon(Icons.person),
-                          border: OutlineInputBorder(),
-                        ),
-                        textCapitalization: TextCapitalization.words,
-                        validator: _validateName,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      const SizedBox(height: 16),
+                    // Información de contacto (lado derecho)
+                    Expanded(
+                      child: Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Información de Contacto',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
 
-                      // Fecha de nacimiento
-                      TextFormField(
-                        controller: _birthDateController,
-                        decoration: const InputDecoration(
-                          labelText: 'Fecha de nacimiento *',
-                          prefixIcon: Icon(Icons.cake),
-                          border: OutlineInputBorder(),
-                          suffixIcon: Icon(Icons.calendar_today),
-                        ),
-                        readOnly: true,
-                        onTap: _selectBirthDate,
-                        validator: _validateBirthDate,
-                      ),
-                      const SizedBox(height: 16),
+                              // Teléfono
+                              TextFormField(
+                                controller: _phoneController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Teléfono *',
+                                  prefixIcon: Icon(Icons.phone),
+                                  border: OutlineInputBorder(),
+                                  hintText: 'Ej: +1234567890',
+                                  helperText: 'Varios pacientes pueden compartir el mismo teléfono',
+                                ),
+                                style: const TextStyle(fontSize: 16),
+                                keyboardType: TextInputType.phone,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-\s\(\)]')),
+                                ],
+                                validator: _validatePhone,
+                                textInputAction: TextInputAction.next,
+                              ),
+                              const SizedBox(height: 20),
 
-                      // Género
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedGender,
-                        decoration: const InputDecoration(
-                          labelText: 'Género *',
-                          prefixIcon: Icon(Icons.wc),
-                          border: OutlineInputBorder(),
-                        ),
-                        items: ['Masculino', 'Femenino', 'Otro'].map((gender) {
-                          return DropdownMenuItem(
-                            value: gender,
-                            child: Text(gender),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _selectedGender = value);
-                          }
-                        },
-                        validator: (value) => value == null ? 'Selecciona un género' : null,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Información de contacto
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Información de Contacto',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                              // Email
+                              TextFormField(
+                                controller: _emailController,
+                                decoration: const InputDecoration(
+                                  labelText: 'Email (opcional)',
+                                  prefixIcon: Icon(Icons.email),
+                                  border: OutlineInputBorder(),
+                                  hintText: 'ejemplo@email.com',
+                                ),
+                                style: const TextStyle(fontSize: 16),
+                                keyboardType: TextInputType.emailAddress,
+                                validator: _validateEmail,
+                                textInputAction: TextInputAction.done,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                    ),
+                  ],
+                )
+              else
+                // Diseño móvil/tablet (original)
+                ...[
+                  // Información personal
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Información Personal',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
 
-                      // Teléfono
-                      TextFormField(
-                        controller: _phoneController,
-                        decoration: const InputDecoration(
-                          labelText: 'Teléfono *',
-                          prefixIcon: Icon(Icons.phone),
-                          border: OutlineInputBorder(),
-                          hintText: 'Ej: +1234567890',
-                          helperText: 'Varios pacientes pueden compartir el mismo teléfono',
-                        ),
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-\s\(\)]')),
+                          // Nombre completo
+                          TextFormField(
+                            controller: _nameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Nombre completo *',
+                              prefixIcon: Icon(Icons.person),
+                              border: OutlineInputBorder(),
+                            ),
+                            textCapitalization: TextCapitalization.words,
+                            validator: _validateName,
+                            textInputAction: TextInputAction.next,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Fecha de nacimiento
+                          TextFormField(
+                            controller: _birthDateController,
+                            decoration: const InputDecoration(
+                              labelText: 'Fecha de nacimiento *',
+                              prefixIcon: Icon(Icons.cake),
+                              border: OutlineInputBorder(),
+                              suffixIcon: Icon(Icons.calendar_today),
+                            ),
+                            readOnly: true,
+                            onTap: _selectBirthDate,
+                            validator: _validateBirthDate,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Género
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedGender,
+                            decoration: const InputDecoration(
+                              labelText: 'Género *',
+                              prefixIcon: Icon(Icons.wc),
+                              border: OutlineInputBorder(),
+                            ),
+                            items: ['Masculino', 'Femenino', 'Otro'].map((gender) {
+                              return DropdownMenuItem(
+                                value: gender,
+                                child: Text(
+                                  gender,
+                                  style: TextStyle(
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.white
+                                        : Colors.black,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _selectedGender = value);
+                              }
+                            },
+                            validator: (value) => value == null ? 'Selecciona un género' : null,
+                          ),
                         ],
-                        validator: _validatePhone,
-                        textInputAction: TextInputAction.next,
                       ),
-                      const SizedBox(height: 16),
-
-                      // Email
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email (opcional)',
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
-                          hintText: 'ejemplo@email.com',
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: _validateEmail,
-                        textInputAction: TextInputAction.done,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Información calculada
-              // if (_selectedBirthDate != null)
-              //   Card(
-              //     color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              //     child: Padding(
-              //       padding: const EdgeInsets.all(16),
-              //       child: Column(
-              //         children: [
-              //           Row(
-              //             children: [
-              //               const Icon(Icons.info_outline),
-              //               const SizedBox(width: 8),
-              //               Text(
-              //                 'Información calculada',
-              //                 style: Theme.of(context).textTheme.titleSmall,
-              //               ),
-              //             ],
-              //           ),
-              //           const SizedBox(height: 8),
-              //           Text(
-              //             'Edad: ${_calculateAge(_selectedBirthDate!)} años',
-              //             style: Theme.of(context).textTheme.bodyMedium,
-              //           ),
-              //         ],
-              //       ),
-              //     ),
-              //   ),
-              const SizedBox(height: 24),
-
-              // Botones
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => context.go('/patients'),
-                      child: const Text('Cancelar'),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _isLoading ? null : _savePatient,
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Text(isEditing ? 'Actualizar' : 'Guardar'),
+                  const SizedBox(height: 16),
+
+                  // Información de contacto
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Información de Contacto',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Teléfono
+                          TextFormField(
+                            controller: _phoneController,
+                            decoration: const InputDecoration(
+                              labelText: 'Teléfono *',
+                              prefixIcon: Icon(Icons.phone),
+                              border: OutlineInputBorder(),
+                              hintText: 'Ej: +1234567890',
+                              helperText: 'Varios pacientes pueden compartir el mismo teléfono',
+                            ),
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'[0-9+\-\s\(\)]')),
+                            ],
+                            validator: _validatePhone,
+                            textInputAction: TextInputAction.next,
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Email
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: const InputDecoration(
+                              labelText: 'Email (opcional)',
+                              prefixIcon: Icon(Icons.email),
+                              border: OutlineInputBorder(),
+                              hintText: 'ejemplo@email.com',
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            validator: _validateEmail,
+                            textInputAction: TextInputAction.done,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
-              ),
+
+              SizedBox(height: ResponsiveUtils.isDesktop(context) ? 32 : 24),
+
+              // Botones
+              if (ResponsiveUtils.isDesktop(context))
+                // Botones para desktop - más centrados y proporcionales
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 200,
+                      height: 50,
+                      child: OutlinedButton(
+                        onPressed: _isLoading ? null : () => context.go('/patients'),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          foregroundColor: Theme.of(context).colorScheme.primary,
+                        ),
+                        child: const Text(
+                          'Cancelar',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    SizedBox(
+                      width: 200,
+                      height: 50,
+                      child: FilledButton(
+                        onPressed: _isLoading ? null : _savePatient,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                isEditing ? 'Actualizar' : 'Guardar',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                              ),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                // Botones para móvil/tablet - diseño original
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isLoading ? null : () => context.go('/patients'),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                          foregroundColor: Theme.of(context).colorScheme.primary,
+                        ),
+                        child: const Text('Cancelar'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: FilledButton(
+                        onPressed: _isLoading ? null : _savePatient,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(isEditing ? 'Actualizar' : 'Guardar'),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -340,11 +528,39 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
     setState(() => _isLoading = true);
 
     try {
+      final name = _nameController.text.trim();
+
+      // Check for duplicate names
+      final nameExists = await ref.read(patientProvider.notifier).checkPatientNameExists(
+        name,
+        excludeId: widget.patient?.id,
+      );
+
+      if (nameExists) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Ya existe un paciente con el nombre "$name".\nPor favor, use un nombre diferente.',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        setState(() => _isLoading = false);
+        return;
+      }
+
       final age = _calculateAge(_selectedBirthDate!);
 
       final patient = Patient(
         id: widget.patient?.id,
-        name: _nameController.text.trim(),
+        name: name,
         age: age,
         birthDate: _selectedBirthDate!,
         phone: _phoneController.text.trim(),
@@ -362,19 +578,37 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.patient != null
-                ? 'Paciente actualizado correctamente'
-                : 'Paciente agregado correctamente'),
+            content: Text(
+              widget.patient != null
+                  ? 'Paciente actualizado correctamente'
+                  : 'Paciente agregado correctamente',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             backgroundColor: Colors.green,
           ),
         );
-        context.go('/patients');
+
+        // Navigate back to patient's consultation page if editing, otherwise to patients list
+        if (widget.patient != null) {
+          context.go('/patients/${widget.patient!.id}');
+        } else {
+          context.go('/patients');
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(
+              'Error al guardar: $e',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -413,14 +647,32 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
         await ref.read(patientProvider.notifier).removePatient(widget.patient!.id!);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Paciente eliminado')),
+            SnackBar(
+              content: const Text(
+                'Paciente eliminado',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.red,
+            ),
           );
           context.go('/patients');
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al eliminar: $e')),
+            SnackBar(
+              content: Text(
+                'Error al eliminar: $e',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }

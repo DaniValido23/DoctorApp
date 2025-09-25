@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:doctor_app/data/models/consultation.dart';
-import 'package:doctor_app/data/repositories/consultation_repository.dart';
+import 'package:doctor_app/data/models/models.dart';
+import 'package:doctor_app/data/repositories/repositories.dart';
 
 class ConsultationNotifier extends StateNotifier<AsyncValue<List<Consultation>>> {
   final ConsultationRepository _repository;

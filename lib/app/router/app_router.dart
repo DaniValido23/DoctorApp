@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:doctor_app/data/models/patient.dart';
 import 'package:doctor_app/presentation/pages/patients/patients_list_page.dart';
 import 'package:doctor_app/presentation/pages/patients/add_patient_page.dart';
 import 'package:doctor_app/presentation/pages/patients/patient_consultations_page.dart';
@@ -17,7 +18,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/patients/add',
       name: 'add-patient',
-      builder: (context, state) => const AddPatientPage(),
+      builder: (context, state) {
+        final patient = state.extra as Patient?;
+        return AddPatientPage(patient: patient);
+      },
     ),
     GoRoute(
       path: '/patients/:id',

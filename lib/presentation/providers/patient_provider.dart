@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:doctor_app/data/models/patient.dart';
 import 'package:doctor_app/data/repositories/patient_repository.dart';
+import 'package:doctor_app/services/services.dart';
 
 class PatientNotifier extends StateNotifier<AsyncValue<List<Patient>>> {
   final PatientRepository _repository;
@@ -22,6 +23,9 @@ class PatientNotifier extends StateNotifier<AsyncValue<List<Patient>>> {
     try {
       final id = await _repository.insertPatient(patient);
       final newPatient = patient.copyWith(id: id);
+
+      // Create patient folder
+      await FileOrganizationService.createPatientFolder(newPatient);
 
       state.whenData((patients) {
         state = AsyncValue.data([newPatient, ...patients]);
@@ -48,7 +52,16 @@ class PatientNotifier extends StateNotifier<AsyncValue<List<Patient>>> {
 
   Future<void> removePatient(int patientId) async {
     try {
+      // Get patient data before deleting from database
+      final patient = await _repository.getPatientById(patientId);
+
+      // Delete from database
       await _repository.deletePatient(patientId);
+
+      // Delete patient folder if patient exists
+      if (patient != null) {
+        await FileOrganizationService.deletePatientFolder(patient);
+      }
 
       state.whenData((patients) {
         final updatedList = patients.where((patient) => patient.id != patientId).toList();
@@ -65,6 +78,14 @@ class PatientNotifier extends StateNotifier<AsyncValue<List<Patient>>> {
 
   Future<Patient?> getPatientById(int id) async {
     return await _repository.getPatientById(id);
+  }
+
+  Future<bool> checkPatientNameExists(String name, {int? excludeId}) async {
+    return await _repository.patientExistsByName(name, excludeId: excludeId);
+  }
+
+  void refresh() {
+    loadPatients();
   }
 }
 

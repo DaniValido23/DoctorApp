@@ -2,13 +2,7 @@ import 'dart:async';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:doctor_app/core/constants/database_constants.dart';
-import 'package:doctor_app/data/database/tables/patients_table.dart';
-import 'package:doctor_app/data/database/tables/consultations_table.dart';
-import 'package:doctor_app/data/database/tables/medications_table.dart';
-import 'package:doctor_app/data/database/tables/symptoms_table.dart';
-import 'package:doctor_app/data/database/tables/treatments_table.dart';
-import 'package:doctor_app/data/database/tables/diagnoses_table.dart';
-import 'package:doctor_app/data/database/tables/attachments_table.dart';
+import 'package:doctor_app/data/database/tables/tables.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -62,32 +56,47 @@ class DatabaseHelper {
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Handle database upgrades here if needed in the future
-    if (oldVersion < newVersion) {
-      // For now, we'll recreate all tables
-      await _dropAllTables(db);
-      await _onCreate(db, newVersion);
+    // Handle database upgrades preserving existing data
+    if (oldVersion < 3 && newVersion >= 3) {
+      await _upgradeToV3(db);
     }
+
+    // Future upgrades can be added here
+    // if (oldVersion < 4 && newVersion >= 4) {
+    //   await _upgradeToV4(db);
+    // }
   }
 
-  Future<void> _dropAllTables(Database db) async {
-    final batch = db.batch();
+  Future<void> _upgradeToV3(Database db) async {
+    // Add vital signs columns to consultations table
+    await db.execute('''
+      ALTER TABLE ${DatabaseConstants.consultationsTable}
+      ADD COLUMN ${DatabaseConstants.columnConsultationBodyTemperature} REAL
+    ''');
 
-    // Drop junction tables first (due to foreign keys)
-    batch.execute(ConsultationSymptomsTable.dropTable);
-    batch.execute(ConsultationTreatmentsTable.dropTable);
-    batch.execute(ConsultationDiagnosesTable.dropTable);
+    await db.execute('''
+      ALTER TABLE ${DatabaseConstants.consultationsTable}
+      ADD COLUMN ${DatabaseConstants.columnConsultationBloodPressureSystolic} INTEGER
+    ''');
 
-    // Drop main tables
-    batch.execute(AttachmentsTable.dropTable);
-    batch.execute(MedicationsTable.dropTable);
-    batch.execute(ConsultationsTable.dropTable);
-    batch.execute(SymptomsTable.dropTable);
-    batch.execute(TreatmentsTable.dropTable);
-    batch.execute(DiagnosesTable.dropTable);
-    batch.execute(PatientsTable.dropTable);
+    await db.execute('''
+      ALTER TABLE ${DatabaseConstants.consultationsTable}
+      ADD COLUMN ${DatabaseConstants.columnConsultationBloodPressureDiastolic} INTEGER
+    ''');
 
-    await batch.commit();
+    await db.execute('''
+      ALTER TABLE ${DatabaseConstants.consultationsTable}
+      ADD COLUMN ${DatabaseConstants.columnConsultationOxygenSaturation} REAL
+    ''');
+
+    await db.execute('''
+      ALTER TABLE ${DatabaseConstants.consultationsTable}
+      ADD COLUMN ${DatabaseConstants.columnConsultationHeight} REAL
+    ''');
+
+    // Make weight column nullable by creating new table structure
+    // Note: SQLite doesn't support ALTER COLUMN, so we'd need to recreate table
+    // For now, we'll keep weight as NOT NULL but handle nulls in application logic
   }
 
   Future<void> close() async {

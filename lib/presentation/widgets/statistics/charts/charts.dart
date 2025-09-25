@@ -1,0 +1,12 @@
+export 'package:doctor_app/presentation/widgets/statistics/charts/base_charts.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/frequent_patients_chart.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/top_symptoms_chart.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/top_medications_chart.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/top_diagnoses_chart.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/weight_evolution_chart.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/symptoms_diagnoses_chart.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/time_period_helpers.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/consultations_chart.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/chart_card.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/age_demographics_chart.dart';
+export 'package:doctor_app/presentation/widgets/statistics/charts/revenue_chart.dart';

@@ -16,6 +16,8 @@ _$DoctorSettingsImpl _$$DoctorSettingsImplFromJson(Map<String, dynamic> json) =>
       phone: json['phone'] as String?,
       email: json['email'] as String?,
       logoPath: json['logoPath'] as String?,
+      titles: json['titles'] as String?,
+      medicalSchool: json['medicalSchool'] as String?,
     );
 
 Map<String, dynamic> _$$DoctorSettingsImplToJson(
@@ -29,4 +31,6 @@ Map<String, dynamic> _$$DoctorSettingsImplToJson(
   'phone': instance.phone,
   'email': instance.email,
   'logoPath': instance.logoPath,
+  'titles': instance.titles,
+  'medicalSchool': instance.medicalSchool,
 };

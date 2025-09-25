@@ -29,6 +29,9 @@ mixin _$DoctorSettings {
   String? get phone => throw _privateConstructorUsedError;
   String? get email => throw _privateConstructorUsedError;
   String? get logoPath => throw _privateConstructorUsedError;
+  String? get titles =>
+      throw _privateConstructorUsedError; // Títulos, diplomados y especialidades
+  String? get medicalSchool => throw _privateConstructorUsedError;
 
   /// Serializes this DoctorSettings to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -56,6 +59,8 @@ abstract class $DoctorSettingsCopyWith<$Res> {
     String? phone,
     String? email,
     String? logoPath,
+    String? titles,
+    String? medicalSchool,
   });
 }
 
@@ -82,6 +87,8 @@ class _$DoctorSettingsCopyWithImpl<$Res, $Val extends DoctorSettings>
     Object? phone = freezed,
     Object? email = freezed,
     Object? logoPath = freezed,
+    Object? titles = freezed,
+    Object? medicalSchool = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -117,6 +124,14 @@ class _$DoctorSettingsCopyWithImpl<$Res, $Val extends DoctorSettings>
                 ? _value.logoPath
                 : logoPath // ignore: cast_nullable_to_non_nullable
                       as String?,
+            titles: freezed == titles
+                ? _value.titles
+                : titles // ignore: cast_nullable_to_non_nullable
+                      as String?,
+            medicalSchool: freezed == medicalSchool
+                ? _value.medicalSchool
+                : medicalSchool // ignore: cast_nullable_to_non_nullable
+                      as String?,
           )
           as $Val,
     );
@@ -141,6 +156,8 @@ abstract class _$$DoctorSettingsImplCopyWith<$Res>
     String? phone,
     String? email,
     String? logoPath,
+    String? titles,
+    String? medicalSchool,
   });
 }
 
@@ -166,6 +183,8 @@ class __$$DoctorSettingsImplCopyWithImpl<$Res>
     Object? phone = freezed,
     Object? email = freezed,
     Object? logoPath = freezed,
+    Object? titles = freezed,
+    Object? medicalSchool = freezed,
   }) {
     return _then(
       _$DoctorSettingsImpl(
@@ -201,6 +220,14 @@ class __$$DoctorSettingsImplCopyWithImpl<$Res>
             ? _value.logoPath
             : logoPath // ignore: cast_nullable_to_non_nullable
                   as String?,
+        titles: freezed == titles
+            ? _value.titles
+            : titles // ignore: cast_nullable_to_non_nullable
+                  as String?,
+        medicalSchool: freezed == medicalSchool
+            ? _value.medicalSchool
+            : medicalSchool // ignore: cast_nullable_to_non_nullable
+                  as String?,
       ),
     );
   }
@@ -218,6 +245,8 @@ class _$DoctorSettingsImpl implements _DoctorSettings {
     this.phone,
     this.email,
     this.logoPath,
+    this.titles,
+    this.medicalSchool,
   });
 
   factory _$DoctorSettingsImpl.fromJson(Map<String, dynamic> json) =>
@@ -239,10 +268,15 @@ class _$DoctorSettingsImpl implements _DoctorSettings {
   final String? email;
   @override
   final String? logoPath;
+  @override
+  final String? titles;
+  // Títulos, diplomados y especialidades
+  @override
+  final String? medicalSchool;
 
   @override
   String toString() {
-    return 'DoctorSettings(doctorName: $doctorName, specialty: $specialty, licenseNumber: $licenseNumber, clinicName: $clinicName, address: $address, phone: $phone, email: $email, logoPath: $logoPath)';
+    return 'DoctorSettings(doctorName: $doctorName, specialty: $specialty, licenseNumber: $licenseNumber, clinicName: $clinicName, address: $address, phone: $phone, email: $email, logoPath: $logoPath, titles: $titles, medicalSchool: $medicalSchool)';
   }
 
   @override
@@ -262,7 +296,10 @@ class _$DoctorSettingsImpl implements _DoctorSettings {
             (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.email, email) || other.email == email) &&
             (identical(other.logoPath, logoPath) ||
-                other.logoPath == logoPath));
+                other.logoPath == logoPath) &&
+            (identical(other.titles, titles) || other.titles == titles) &&
+            (identical(other.medicalSchool, medicalSchool) ||
+                other.medicalSchool == medicalSchool));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -277,6 +314,8 @@ class _$DoctorSettingsImpl implements _DoctorSettings {
     phone,
     email,
     logoPath,
+    titles,
+    medicalSchool,
   );
 
   /// Create a copy of DoctorSettings
@@ -306,6 +345,8 @@ abstract class _DoctorSettings implements DoctorSettings {
     final String? phone,
     final String? email,
     final String? logoPath,
+    final String? titles,
+    final String? medicalSchool,
   }) = _$DoctorSettingsImpl;
 
   factory _DoctorSettings.fromJson(Map<String, dynamic> json) =
@@ -327,6 +368,10 @@ abstract class _DoctorSettings implements DoctorSettings {
   String? get email;
   @override
   String? get logoPath;
+  @override
+  String? get titles; // Títulos, diplomados y especialidades
+  @override
+  String? get medicalSchool;
 
   /// Create a copy of DoctorSettings
   /// with the given fields replaced by the non-null parameter values.

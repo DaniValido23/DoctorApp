@@ -1,8 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:doctor_app/data/database/database_helper.dart';
-import 'package:doctor_app/data/models/consultation.dart';
-import 'package:doctor_app/data/models/medication.dart';
-import 'package:doctor_app/data/models/attachment.dart';
+import 'package:doctor_app/data/models/models.dart';
 import 'package:doctor_app/core/constants/database_constants.dart';
 
 class ConsultationRepository {
@@ -19,7 +17,14 @@ class ConsultationRepository {
       final consultationMap = {
         DatabaseConstants.columnConsultationPatientId: consultation.patientId,
         DatabaseConstants.columnConsultationDate: consultation.date.toIso8601String(),
+        // Vital Signs
+        DatabaseConstants.columnConsultationBodyTemperature: consultation.bodyTemperature,
+        DatabaseConstants.columnConsultationBloodPressureSystolic: consultation.bloodPressureSystolic,
+        DatabaseConstants.columnConsultationBloodPressureDiastolic: consultation.bloodPressureDiastolic,
+        DatabaseConstants.columnConsultationOxygenSaturation: consultation.oxygenSaturation,
         DatabaseConstants.columnConsultationWeight: consultation.weight,
+        DatabaseConstants.columnConsultationHeight: consultation.height,
+        // Other fields
         DatabaseConstants.columnConsultationObservations: consultation.observations,
         DatabaseConstants.columnConsultationPrice: consultation.price,
         DatabaseConstants.columnConsultationPdfPath: consultation.pdfPath,
@@ -79,12 +84,19 @@ class ConsultationRepository {
       id: consultationMap[DatabaseConstants.columnId],
       patientId: consultationMap[DatabaseConstants.columnConsultationPatientId],
       date: DateTime.parse(consultationMap[DatabaseConstants.columnConsultationDate]),
+      // Vital Signs
+      bodyTemperature: consultationMap[DatabaseConstants.columnConsultationBodyTemperature]?.toDouble(),
+      bloodPressureSystolic: consultationMap[DatabaseConstants.columnConsultationBloodPressureSystolic],
+      bloodPressureDiastolic: consultationMap[DatabaseConstants.columnConsultationBloodPressureDiastolic],
+      oxygenSaturation: consultationMap[DatabaseConstants.columnConsultationOxygenSaturation]?.toDouble(),
+      weight: consultationMap[DatabaseConstants.columnConsultationWeight]?.toDouble(),
+      height: consultationMap[DatabaseConstants.columnConsultationHeight]?.toDouble(),
+      // Medical Information
       symptoms: symptoms,
-      treatments: treatments,
       diagnoses: diagnoses,
       medications: medications,
+      treatments: treatments,
       attachments: attachments,
-      weight: consultationMap[DatabaseConstants.columnConsultationWeight],
       observations: consultationMap[DatabaseConstants.columnConsultationObservations],
       price: consultationMap[DatabaseConstants.columnConsultationPrice],
       pdfPath: consultationMap[DatabaseConstants.columnConsultationPdfPath],
@@ -329,7 +341,14 @@ class ConsultationRepository {
       {
         DatabaseConstants.columnConsultationPatientId: consultation.patientId,
         DatabaseConstants.columnConsultationDate: consultation.date.toIso8601String(),
+        // Vital Signs
+        DatabaseConstants.columnConsultationBodyTemperature: consultation.bodyTemperature,
+        DatabaseConstants.columnConsultationBloodPressureSystolic: consultation.bloodPressureSystolic,
+        DatabaseConstants.columnConsultationBloodPressureDiastolic: consultation.bloodPressureDiastolic,
+        DatabaseConstants.columnConsultationOxygenSaturation: consultation.oxygenSaturation,
         DatabaseConstants.columnConsultationWeight: consultation.weight,
+        DatabaseConstants.columnConsultationHeight: consultation.height,
+        // Other fields
         DatabaseConstants.columnConsultationObservations: consultation.observations,
         DatabaseConstants.columnConsultationPrice: consultation.price,
         DatabaseConstants.columnConsultationPdfPath: consultation.pdfPath,

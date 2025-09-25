@@ -1,24 +1,14 @@
+import 'dart:io';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:doctor_app/data/models/patient.dart';
-import 'package:doctor_app/data/models/consultation.dart';
-import 'package:doctor_app/data/models/medication.dart';
-import 'package:doctor_app/data/models/attachment.dart';
-import 'package:doctor_app/presentation/providers/patient_provider.dart';
-import 'package:doctor_app/presentation/providers/consultation_provider.dart';
-import 'package:doctor_app/presentation/pages/consultation/widgets/symptom_form.dart';
-import 'package:doctor_app/presentation/pages/consultation/widgets/medication_form.dart';
-import 'package:doctor_app/presentation/pages/consultation/widgets/treatment_form.dart';
-import 'package:doctor_app/presentation/pages/consultation/widgets/diagnosis_form.dart';
-import 'package:doctor_app/presentation/pages/consultation/widgets/attachment_widget.dart';
-import 'package:doctor_app/services/pdf_service.dart';
-import 'package:doctor_app/presentation/providers/settings_provider.dart';
-import 'package:doctor_app/data/models/doctor_settings.dart';
-import 'package:doctor_app/core/utils/responsive_utils.dart';
-import 'dart:io';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:printing/printing.dart';
+import 'package:doctor_app/presentation/pages/consultation/widgets/widgets.dart';
+import 'package:doctor_app/data/models/models.dart';
+import 'package:doctor_app/presentation/providers/providers.dart';
+import 'package:doctor_app/services/services.dart';
+import 'package:doctor_app/core/utils/utils.dart';
 
 class ConsultationPage extends ConsumerStatefulWidget {
   final int patientId;
@@ -29,13 +19,18 @@ class ConsultationPage extends ConsumerStatefulWidget {
   ConsumerState<ConsultationPage> createState() => _ConsultationPageState();
 }
 
-class _ConsultationPageState extends ConsumerState<ConsultationPage>
-    with SingleTickerProviderStateMixin {
+class _ConsultationPageState extends ConsumerState<ConsultationPage> {
   final _formKey = GlobalKey<FormState>();
-  late TabController _tabController;
 
-  // Controllers
+  // Vital Signs Controllers
+  final _temperatureController = TextEditingController();
+  final _systolicPressureController = TextEditingController();
+  final _diastolicPressureController = TextEditingController();
+  final _oxygenSaturationController = TextEditingController();
   final _weightController = TextEditingController();
+  final _heightController = TextEditingController();
+
+  // Other Controllers
   final _priceController = TextEditingController();
   final _observationsController = TextEditingController();
 
@@ -52,12 +47,13 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
     _loadPatient();
   }
 
   Future<void> _loadPatient() async {
-    final patient = await ref.read(patientProvider.notifier).getPatientById(widget.patientId);
+    final patient = await ref
+        .read(patientProvider.notifier)
+        .getPatientById(widget.patientId);
     if (mounted) {
       setState(() {
         _patient = patient;
@@ -76,564 +72,520 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Consulta - ${_patient!.name}'),
+        title: Text('Nueva consulta de ${_patient!.name}'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/patients/${widget.patientId}'),
-            tooltip: 'Ver historial de consultas',
+          Padding(
+            padding: const EdgeInsets.only(right: 25),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: _onCancel,
+              tooltip: 'Cancelar consulta',
+            ),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          dividerColor: Colors.transparent,
-          tabs: const [
-            Tab(icon: Icon(Icons.sick), text: 'Síntomas'),
-            Tab(icon: Icon(Icons.medication), text: 'Medicamentos'),
-            Tab(icon: Icon(Icons.healing), text: 'Tratamientos'),
-            Tab(icon: Icon(Icons.medical_services), text: 'Diagnósticos'),
-            Tab(icon: Icon(Icons.attach_file), text: 'Archivos'),
-            Tab(icon: Icon(Icons.notes), text: 'Resumen'),
-          ],
-        ),
       ),
       body: ResponsiveLayout(
-        mobile: Form(
-          key: _formKey,
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              // Tab 1: Síntomas
-              SymptomForm(
-                initialSymptoms: _symptoms,
-                onSymptomsChanged: (symptoms) => setState(() => _symptoms = symptoms),
-              ),
-
-              // Tab 2: Medicamentos
-              MedicationForm(
-                initialMedications: _medications,
-                onMedicationsChanged: (medications) => setState(() => _medications = medications),
-              ),
-
-              // Tab 3: Tratamientos
-              TreatmentForm(
-                initialTreatments: _treatments,
-                onTreatmentsChanged: (treatments) => setState(() => _treatments = treatments),
-              ),
-
-              // Tab 4: Diagnósticos
-              DiagnosisForm(
-                initialDiagnoses: _diagnoses,
-                onDiagnosesChanged: (diagnoses) => setState(() => _diagnoses = diagnoses),
-              ),
-
-              // Tab 5: Archivos adjuntos
-              AttachmentWidget(
-                initialAttachments: _attachments,
-                onAttachmentsChanged: (attachments) => setState(() => _attachments = attachments),
-              ),
-
-              // Tab 6: Resumen y guardar
-              _buildSummaryTab(),
-            ],
-          ),
-        ),
-        desktop: _buildDesktopLayout(),
+        mobile: _buildScrollableForm(),
+        desktop: _buildScrollableForm(),
       ),
     );
   }
 
-  Widget _buildDesktopLayout() {
+  Widget _buildScrollableForm() {
     return Form(
       key: _formKey,
-      child: ResponsiveContainer(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Left sidebar with navigation
-            SizedBox(
-              width: 280,
-              child: Card(
-                margin: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // Patient info header
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withAlpha((255 * 0.1).round()),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
-                        ),
-                      ),
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundColor: Theme.of(context).primaryColor,
-                            child: Text(
-                              _patient!.name.isNotEmpty ? _patient!.name[0].toUpperCase() : '?',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _patient!.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          Text(
-                            '${_patient!.age} años • ${_patient!.gender}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
+      child: SingleChildScrollView(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWideScreen = constraints.maxWidth > 1000;
+            final isMediumScreen = constraints.maxWidth > 600;
 
-                    // Navigation tabs
-                    Expanded(
-                      child: ListView(
-                        padding: const EdgeInsets.all(8),
-                        children: [
-                          _buildDesktopNavItem(0, Icons.sick, 'Síntomas', _symptoms.length),
-                          _buildDesktopNavItem(1, Icons.medication, 'Medicamentos', _medications.length),
-                          _buildDesktopNavItem(2, Icons.healing, 'Tratamientos', _treatments.length),
-                          _buildDesktopNavItem(3, Icons.medical_services, 'Diagnósticos', _diagnoses.length),
-                          _buildDesktopNavItem(4, Icons.attach_file, 'Archivos', _attachments.length),
-                          _buildDesktopNavItem(5, Icons.notes, 'Resumen', 0),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Main content area
-            Expanded(
-              child: Card(
-                margin: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    // Tab 1: Síntomas
-                    _buildDesktopTabContent(
-                      SymptomForm(
-                        initialSymptoms: _symptoms,
-                        onSymptomsChanged: (symptoms) => setState(() => _symptoms = symptoms),
-                      ),
-                    ),
-
-                    // Tab 2: Medicamentos
-                    _buildDesktopTabContent(
-                      MedicationForm(
-                        initialMedications: _medications,
-                        onMedicationsChanged: (medications) => setState(() => _medications = medications),
-                      ),
-                    ),
-
-                    // Tab 3: Tratamientos
-                    _buildDesktopTabContent(
-                      TreatmentForm(
-                        initialTreatments: _treatments,
-                        onTreatmentsChanged: (treatments) => setState(() => _treatments = treatments),
-                      ),
-                    ),
-
-                    // Tab 4: Diagnósticos
-                    _buildDesktopTabContent(
-                      DiagnosisForm(
-                        initialDiagnoses: _diagnoses,
-                        onDiagnosesChanged: (diagnoses) => setState(() => _diagnoses = diagnoses),
-                      ),
-                    ),
-
-                    // Tab 5: Archivos adjuntos
-                    _buildDesktopTabContent(
-                      AttachmentWidget(
-                        initialAttachments: _attachments,
-                        onAttachmentsChanged: (attachments) => setState(() => _attachments = attachments),
-                      ),
-                    ),
-
-                    // Tab 6: Resumen y guardar
-                    _buildDesktopTabContent(_buildSummaryTab()),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            if (isWideScreen) {
+              return _buildWideScreenLayout();
+            } else if (isMediumScreen) {
+              return _buildMediumScreenLayout();
+            } else {
+              return _buildNarrowScreenLayout();
+            }
+          },
         ),
       ),
     );
   }
 
-  Widget _buildDesktopNavItem(int index, IconData icon, String title, int count) {
-    final isSelected = _tabController.index == index;
-    final isRequired = title == 'Síntomas' || title == 'Diagnósticos';
-    final hasError = isRequired && count == 0;
+  Widget _buildWideScreenLayout() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          // 1. Signos Vitales (full width)
+          VitalSignsSection(
+            temperatureController: _temperatureController,
+            systolicPressureController: _systolicPressureController,
+            diastolicPressureController: _diastolicPressureController,
+            oxygenSaturationController: _oxygenSaturationController,
+            weightController: _weightController,
+            heightController: _heightController,
+          ),
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      child: Material(
-        color: isSelected
-          ? Theme.of(context).primaryColor.withAlpha((255 * 0.1).round())
-          : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          onTap: () => _tabController.animateTo(index),
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          // Row 1: Síntomas del paciente, Diagnósticos médicos
+          IntrinsicHeight(
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: hasError
-                    ? Theme.of(context).colorScheme.error
-                    : isSelected
-                      ? Theme.of(context).primaryColor
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: hasError
-                        ? Theme.of(context).colorScheme.error
-                        : isSelected
-                          ? Theme.of(context).primaryColor
-                          : null,
+                  child: _buildSection(
+                    title: 'Síntomas del paciente',
+                    icon: Icons.sick,
+                    child: SymptomForm(
+                      initialSymptoms: _symptoms,
+                      onSymptomsChanged: (symptoms) =>
+                          setState(() => _symptoms = symptoms),
                     ),
                   ),
                 ),
-                if (title != 'Resumen')
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: hasError
-                        ? Theme.of(context).colorScheme.error
-                        : count > 0
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey.withAlpha((255 * 0.3).round()),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '$count',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildSection(
+                    title: 'Diagnósticos médicos',
+                    icon: Icons.medical_services,
+                    child: DiagnosisForm(
+                      initialDiagnoses: _diagnoses,
+                      onDiagnosesChanged: (diagnoses) =>
+                          setState(() => _diagnoses = diagnoses),
                     ),
                   ),
+                ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildDesktopTabContent(Widget child) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 800),
-      child: child,
-    );
-  }
-
-  Widget _buildSummaryTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Información del paciente
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        child: Text(
-                          _patient!.name.isNotEmpty ? _patient!.name[0].toUpperCase() : '?',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _patient!.name,
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            Text(
-                              '${_patient!.age} años • ${_patient!.gender}',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            Text(
-                              'Tel: ${_patient!.phone}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
           const SizedBox(height: 16),
 
-          // Peso y Precio
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _weightController,
-                  decoration: const InputDecoration(
-                    labelText: 'Peso (kg) *',
-                    prefixIcon: Icon(Icons.monitor_weight),
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value?.isEmpty == true) return 'Requerido';
-                    if (double.tryParse(value!) == null) return 'Número inválido';
-                    final weight = double.parse(value);
-                    if (weight <= 0 || weight > 500) return 'Peso inválido';
-                    return null;
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: TextFormField(
-                  controller: _priceController,
-                  decoration: const InputDecoration(
-                    labelText: 'Precio (\$) *',
-                    prefixIcon: Icon(Icons.attach_money),
-                    border: OutlineInputBorder(),
-                  ),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value?.isEmpty == true) return 'Requerido';
-                    if (double.tryParse(value!) == null) return 'Número inválido';
-                    final price = double.parse(value);
-                    if (price < 0) return 'Precio inválido';
-                    return null;
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Observaciones
-          TextFormField(
-            controller: _observationsController,
-            decoration: const InputDecoration(
-              labelText: 'Observaciones (opcional)',
-              prefixIcon: Icon(Icons.note_add),
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 3,
-          ),
-          const SizedBox(height: 24),
-
-          // Resumen de datos
-          _buildDataSummary(),
-          const SizedBox(height: 24),
-
-          // Botones
-          Column(
-            children: [
-              Row(
-                children: [
-                  // Expanded(
-                  //   child: OutlinedButton.icon(
-                  //     onPressed: _isLoading ? null : () => context.go('/patients/${widget.patientId}'),
-                  //     icon: const Icon(Icons.arrow_back),
-                  //     label: const Text('Volver al Historial'),
-                  //   ),
-                  // ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _isLoading ? null : _saveConsultation,
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Guardar Consulta'),
+          // Row 2: Medicamentos, Plan de tratamiento
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildSection(
+                    title: 'Medicamentos',
+                    icon: Icons.medication,
+                    child: MedicationForm(
+                      initialMedications: _medications,
+                      onMedicationsChanged: (medications) =>
+                          setState(() => _medications = medications),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildSection(
+                    title: 'Plan de tratamiento',
+                    icon: Icons.healing,
+                    child: TreatmentForm(
+                      initialTreatments: _treatments,
+                      onTreatmentsChanged: (treatments) =>
+                          setState(() => _treatments = treatments),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+
+          const SizedBox(height: 16),
+
+          // Row 3: Observaciones (1/2), Precio de consulta (1/4), Estudios médicos (1/4)
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 2, // 1/2 del espacio
+                  child: _buildSection(
+                    title: 'Observaciones',
+                    icon: Icons.notes,
+                    child: _buildObservationsField(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 1, // 1/4 del espacio
+                  child: _buildSection(
+                    title: 'Precio de consulta',
+                    icon: Icons.attach_money,
+                    child: _buildPriceField(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 1, // 1/4 del espacio
+                  child: _buildSection(
+                    title: 'Estudios médicos',
+                    icon: Icons.attach_file,
+                    child: AttachmentWidget(
+                      initialAttachments: _attachments,
+                      onAttachmentsChanged: (attachments) =>
+                          setState(() => _attachments = attachments),
+                      patient: _patient,
+                      consultationDate: DateTime.now(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          _buildActionButtons(),
         ],
       ),
     );
   }
 
-  Widget _buildDataSummary() {
+  Widget _buildMediumScreenLayout() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          // 1. Signos Vitales (full width)
+          VitalSignsSection(
+            temperatureController: _temperatureController,
+            systolicPressureController: _systolicPressureController,
+            diastolicPressureController: _diastolicPressureController,
+            oxygenSaturationController: _oxygenSaturationController,
+            weightController: _weightController,
+            heightController: _heightController,
+          ),
+
+          // Row 1: Síntomas del paciente, Diagnósticos médicos
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildSection(
+                    title: 'Síntomas del paciente',
+                    icon: Icons.sick,
+                    child: SymptomForm(
+                      initialSymptoms: _symptoms,
+                      onSymptomsChanged: (symptoms) =>
+                          setState(() => _symptoms = symptoms),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildSection(
+                    title: 'Diagnósticos médicos',
+                    icon: Icons.medical_services,
+                    child: DiagnosisForm(
+                      initialDiagnoses: _diagnoses,
+                      onDiagnosesChanged: (diagnoses) =>
+                          setState(() => _diagnoses = diagnoses),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Row 2: Medicamentos, Plan de tratamiento
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildSection(
+                    title: 'Medicamentos',
+                    icon: Icons.medication,
+                    child: MedicationForm(
+                      initialMedications: _medications,
+                      onMedicationsChanged: (medications) =>
+                          setState(() => _medications = medications),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildSection(
+                    title: 'Plan de tratamiento',
+                    icon: Icons.healing,
+                    child: TreatmentForm(
+                      initialTreatments: _treatments,
+                      onTreatmentsChanged: (treatments) =>
+                          setState(() => _treatments = treatments),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Row 3: Observaciones (full width)
+          _buildSection(
+            title: 'Observaciones',
+            icon: Icons.notes,
+            child: _buildObservationsField(),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Row 4: Precio de consulta, Estudios médicos
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _buildSection(
+                    title: 'precio de consulta',
+                    icon: Icons.attach_money,
+                    child: _buildPriceField(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildSection(
+                    title: 'Estudios médicos',
+                    icon: Icons.attach_file,
+                    child: AttachmentWidget(
+                      initialAttachments: _attachments,
+                      onAttachmentsChanged: (attachments) =>
+                          setState(() => _attachments = attachments),
+                      patient: _patient,
+                      consultationDate: DateTime.now(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          _buildActionButtons(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNarrowScreenLayout() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Resumen de la Consulta',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+        // 1. Signos Vitales
+        VitalSignsSection(
+          temperatureController: _temperatureController,
+          systolicPressureController: _systolicPressureController,
+          diastolicPressureController: _diastolicPressureController,
+          oxygenSaturationController: _oxygenSaturationController,
+          weightController: _weightController,
+          heightController: _heightController,
+        ),
+
+        // 2. Síntomas del Paciente
+        _buildSection(
+          title: 'Síntomas del paciente',
+          icon: Icons.sick,
+          child: SymptomForm(
+            initialSymptoms: _symptoms,
+            onSymptomsChanged: (symptoms) =>
+                setState(() => _symptoms = symptoms),
           ),
         ),
+
+        // 3. Diagnósticos Médicos
+        _buildSection(
+          title: 'Diagnósticos Médicos',
+          icon: Icons.medical_services,
+          child: DiagnosisForm(
+            initialDiagnoses: _diagnoses,
+            onDiagnosesChanged: (diagnoses) =>
+                setState(() => _diagnoses = diagnoses),
+          ),
+        ),
+
+        // 4. Medicamentos
+        _buildSection(
+          title: 'Medicamentos',
+          icon: Icons.medication,
+          child: MedicationForm(
+            initialMedications: _medications,
+            onMedicationsChanged: (medications) =>
+                setState(() => _medications = medications),
+          ),
+        ),
+
+        // 5. Plan de Tratamiento
+        _buildSection(
+          title: 'Plan de Tratamiento',
+          icon: Icons.healing,
+          child: TreatmentForm(
+            initialTreatments: _treatments,
+            onTreatmentsChanged: (treatments) =>
+                setState(() => _treatments = treatments),
+          ),
+        ),
+
+        // 6. Archivos Adjuntos
+        _buildSection(
+          title: 'Estudios médicos',
+          icon: Icons.attach_file,
+          child: AttachmentWidget(
+            initialAttachments: _attachments,
+            onAttachmentsChanged: (attachments) =>
+                setState(() => _attachments = attachments),
+            patient: _patient,
+            consultationDate: DateTime.now(),
+          ),
+        ),
+
+        // 7. Observaciones
+        _buildSection(
+          title: 'Observaciones',
+          icon: Icons.notes,
+          child: _buildObservationsField(),
+        ),
+
+        // 8. Precio
+        _buildSection(
+          title: 'Precio de consulta',
+          icon: Icons.attach_money,
+          child: _buildPriceField(),
+        ),
+
         const SizedBox(height: 16),
-
-        _buildSummaryCard('Síntomas', _symptoms, Icons.sick),
-        const SizedBox(height: 8),
-
-        _buildSummaryCard('Medicamentos', _medications.map((m) => '${m.name} - ${m.dosage}').toList(), Icons.medication),
-        const SizedBox(height: 8),
-
-        _buildSummaryCard('Tratamientos', _treatments, Icons.healing),
-        const SizedBox(height: 8),
-
-        _buildSummaryCard('Diagnósticos', _diagnoses, Icons.medical_services),
-        const SizedBox(height: 8),
-
-        _buildSummaryCard('Archivos', _attachments.map((a) => a.fileName).toList(), Icons.attach_file),
+        _buildActionButtons(),
       ],
     );
   }
 
-  Widget _buildSummaryCard(String title, List<String> items, IconData icon) {
-    final isRequired = title == 'Síntomas' || title == 'Diagnósticos';
-    final isEmpty = items.isEmpty;
-    final hasError = isRequired && isEmpty;
+  Widget _buildSection({
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    final theme = Theme.of(context);
 
     return Card(
-      color: hasError
-          ? Theme.of(context).colorScheme.errorContainer.withAlpha((255 * 0.3).round())
-          : null,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 20,
-                  color: hasError
-                      ? Theme.of(context).colorScheme.error
-                      : null,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title + (isRequired ? ' *' : ''),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: hasError
-                          ? Theme.of(context).colorScheme.error
-                          : null,
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: SizedBox(
+        height:
+            title == 'Observaciones' ||
+                title == 'Precio de consulta' ||
+                title == 'Estudios médicos'
+            ? 250
+            : 600,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Section Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.primaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: theme.primaryColor, size: 25),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: theme.colorScheme.onSurface,
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: hasError
-                        ? Theme.of(context).colorScheme.error
-                        : isEmpty
-                            ? Colors.grey
-                            : Theme.of(context).colorScheme.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '${items.length}',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  hasError
-                      ? Icons.error_outline
-                      : isEmpty
-                          ? Icons.radio_button_unchecked
-                          : Icons.check_circle,
-                  size: 20,
-                  color: hasError
-                      ? Theme.of(context).colorScheme.error
-                      : isEmpty
-                          ? Colors.grey
-                          : Colors.green,
-                ),
-              ],
-            ),
-            if (items.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              ...items.take(3).map((item) => Padding(
-                padding: const EdgeInsets.only(left: 28, bottom: 2),
-                child: Text(
-                  '• $item',
-                  style: Theme.of(context).textTheme.bodySmall,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              )),
-              if (items.length > 3)
-                Padding(
-                  padding: const EdgeInsets.only(left: 28),
-                  child: Text(
-                    '... y ${items.length - 3} más',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ),
-            ] else
-              Padding(
-                padding: const EdgeInsets.only(left: 28, top: 4),
-                child: Text(
-                  hasError ? 'Requerido' : 'Sin elementos',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: hasError
-                        ? Theme.of(context).colorScheme.error
-                        : Colors.grey,
-                    fontStyle: FontStyle.italic,
-                    fontWeight: hasError ? FontWeight.w500 : null,
-                  ),
-                ),
+                ],
               ),
-          ],
+              const SizedBox(height: 16),
+
+              // Section Content
+              Expanded(child: child),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildObservationsField() {
+    return TextFormField(
+      controller: _observationsController,
+      maxLines: 5,
+      decoration: const InputDecoration(
+        labelText: 'Observaciones adicionales',
+        hintText:
+            'Escriba cualquier observación adicional sobre la consulta...',
+        border: OutlineInputBorder(),
+        alignLabelWithHint: true,
+      ),
+    );
+  }
+
+  Widget _buildPriceField() {
+    return TextFormField(
+      controller: _priceController,
+      decoration: const InputDecoration(
+        labelText: 'Precio (\$) *',
+        hintText: '500.00',
+        prefixIcon: Icon(Icons.attach_money),
+        border: OutlineInputBorder(),
+      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (value) {
+        if (value?.isEmpty == true) return 'El precio es requerido';
+        final price = double.tryParse(value!);
+        if (price == null) return 'Precio inválido';
+        if (price < 0) return 'El precio no puede ser negativo';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 30),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton.icon(
+            onPressed: _onCancel,
+            icon: const Icon(Icons.clear),
+            label: const Text('Cancelar'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+            ),
+          ),
+          const SizedBox(width: 30),
+          ElevatedButton.icon(
+            onPressed: _isLoading ? null : _saveConsultation,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.save),
+            label: Text(_isLoading ? 'Guardando...' : 'Guardar Consulta'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -664,7 +616,10 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Errores de validación:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text(
+                'Errores de validación:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               ...errors.map((error) => Text('• $error')),
             ],
           ),
@@ -678,7 +633,6 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
     return true;
   }
 
-
   Future<void> _saveConsultation() async {
     if (!_validateConsultationData()) {
       return;
@@ -691,18 +645,41 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
       final consultation = Consultation(
         patientId: widget.patientId,
         date: DateTime.now(),
+        // Vital Signs
+        bodyTemperature: _temperatureController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_temperatureController.text),
+        bloodPressureSystolic: _systolicPressureController.text.trim().isEmpty
+            ? null
+            : int.tryParse(_systolicPressureController.text),
+        bloodPressureDiastolic: _diastolicPressureController.text.trim().isEmpty
+            ? null
+            : int.tryParse(_diastolicPressureController.text),
+        oxygenSaturation: _oxygenSaturationController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_oxygenSaturationController.text),
+        weight: _weightController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_weightController.text),
+        height: _heightController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_heightController.text),
+        // Medical Information
         symptoms: _symptoms,
+        diagnoses: _diagnoses,
         medications: _medications,
         treatments: _treatments,
-        diagnoses: _diagnoses,
-        weight: double.parse(_weightController.text),
-        observations: _observationsController.text.trim().isEmpty ? null : _observationsController.text.trim(),
         attachments: _attachments,
+        observations: _observationsController.text.trim().isEmpty
+            ? null
+            : _observationsController.text.trim(),
         price: double.parse(_priceController.text),
       );
 
       // Save consultation to database
-      final savedConsultation = await ref.read(consultationProvider.notifier).addConsultation(consultation);
+      final savedConsultation = await ref
+          .read(consultationProvider.notifier)
+          .addConsultation(consultation);
 
       // Generate PDF
       await _generateAndSavePDF(savedConsultation);
@@ -710,21 +687,40 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Consulta guardada y PDF generado exitosamente'),
+            content: Text(
+              'Consulta guardada exitosamente',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             backgroundColor: Colors.green,
           ),
         );
 
-        // Clear form and navigate back
-        _clearForm();
-        context.go('/patients/${widget.patientId}');
+        // Clear form and navigate back after successful save
+        _onSaveSuccess();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar consulta: $e'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Error al guardar la consulta',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text('$e'),
+                const SizedBox(height: 8),
+                const Text(
+                  'Los datos del formulario se mantienen para reintentarlo',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                ),
+              ],
+            ),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -738,7 +734,6 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
   Future<void> _generateAndSavePDF(Consultation consultation) async {
     try {
       final settingsAsync = ref.read(settingsProvider);
-
 
       if (settingsAsync.hasError) {
         throw 'Error al cargar configuraciones del doctor: ${settingsAsync.error}';
@@ -758,7 +753,9 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
         );
 
         // Save default settings for future use
-        await ref.read(settingsProvider.notifier).updateSettings(doctorSettings);
+        await ref
+            .read(settingsProvider.notifier)
+            .updateSettings(doctorSettings);
       } else {
         doctorSettings = settingsAsync.value!;
       }
@@ -772,17 +769,26 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
         doctorSettings: doctorSettings,
       );
 
-      // Save PDF to storage
-      final fileName = 'Receta_${_patient!.name}_${consultation.date.millisecondsSinceEpoch}.pdf';
-      final pdfPath = await pdfService.savePDFToStorage(pdfBytes, fileName);
+      // Save PDF to consultation folder
+      final fileName = FileOrganizationService.generateConsultationPDFName(
+        _patient!,
+        consultation.date,
+      );
+      final pdfPath = await pdfService.savePDFToStorage(
+        pdfBytes,
+        fileName,
+        _patient!,
+        consultation.date,
+      );
 
       // Update consultation with PDF path
       final updatedConsultation = consultation.copyWith(pdfPath: pdfPath);
-      await ref.read(consultationProvider.notifier).updateConsultation(updatedConsultation);
+      await ref
+          .read(consultationProvider.notifier)
+          .updateConsultation(updatedConsultation);
 
       // Auto-open PDF with system default app
       await _openFile(pdfPath, 'PDF');
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -802,7 +808,9 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('El archivo${fileType != null ? ' $fileType' : ''} no existe'),
+              content: Text(
+                'El archivo${fileType != null ? ' $fileType' : ''} no existe',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -818,7 +826,6 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
       } else if (Platform.isLinux) {
         await Process.run('xdg-open', [filePath]);
       } else {
-        // Fallback para otras plataformas o mobile
         try {
           final uri = Uri.file(filePath);
           if (await canLaunchUrl(uri)) {
@@ -839,12 +846,13 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
           }
         }
       }
-
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al abrir${fileType != null ? ' $fileType' : ' archivo'}: $e'),
+            content: Text(
+              'Error al abrir${fileType != null ? ' $fileType' : ' archivo'}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -852,10 +860,31 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
     }
   }
 
+  /// Maneja la cancelación de la consulta - limpia el formulario
+  void _onCancel() {
+    _clearForm();
+    context.go('/patients/${widget.patientId}');
+  }
+
+  /// Maneja el guardado exitoso - limpia el formulario
+  void _onSaveSuccess() {
+    _clearForm();
+    context.go('/patients/${widget.patientId}');
+  }
+
   void _clearForm() {
+    // Clear vital signs controllers
+    _temperatureController.clear();
+    _systolicPressureController.clear();
+    _diastolicPressureController.clear();
+    _oxygenSaturationController.clear();
     _weightController.clear();
+    _heightController.clear();
+
+    // Clear other controllers
     _priceController.clear();
     _observationsController.clear();
+
     setState(() {
       _symptoms.clear();
       _medications.clear();
@@ -867,10 +896,18 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage>
 
   @override
   void dispose() {
-    _tabController.dispose();
+    // Dispose vital signs controllers
+    _temperatureController.dispose();
+    _systolicPressureController.dispose();
+    _diastolicPressureController.dispose();
+    _oxygenSaturationController.dispose();
     _weightController.dispose();
+    _heightController.dispose();
+
+    // Dispose other controllers
     _priceController.dispose();
     _observationsController.dispose();
+
     super.dispose();
   }
 }

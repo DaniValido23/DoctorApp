@@ -11,13 +11,20 @@ class Consultation with _$Consultation {
     int? id,
     required int patientId,
     required DateTime date,
+    // Vital Signs (all optional except legacy weight handling)
+    double? bodyTemperature,      // °C
+    int? bloodPressureSystolic,   // mmHg
+    int? bloodPressureDiastolic,  // mmHg
+    double? oxygenSaturation,     // %
+    double? weight,               // kg (now optional)
+    double? height,               // cm
+    // Medical Information
     required List<String> symptoms,
+    required List<String> diagnoses,
     required List<Medication> medications,
     required List<String> treatments,
-    required List<String> diagnoses,
-    required double weight,
-    String? observations,
     required List<Attachment> attachments,
+    String? observations,
     required double price,
     String? pdfPath,
   }) = _Consultation;

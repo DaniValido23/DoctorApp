@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:doctor_app/data/models/patient.dart';
-import 'package:doctor_app/data/models/consultation.dart';
-import 'package:doctor_app/data/models/medication.dart';
-import 'package:doctor_app/data/models/attachment.dart';
-import 'package:doctor_app/presentation/providers/patient_provider.dart';
-import 'package:doctor_app/presentation/providers/consultation_provider.dart';
+import 'package:doctor_app/data/models/models.dart';
+import 'package:doctor_app/presentation/providers/providers.dart';
 import 'package:doctor_app/core/utils/responsive_utils.dart';
 import 'dart:io';
 import 'package:printing/printing.dart';
@@ -82,10 +78,13 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
       appBar: AppBar(
         title: Text(_patient!.name),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/patients'),
-            tooltip: 'Ir a inicio',
+          Padding(
+            padding: const EdgeInsets.only(right: 25),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => context.go('/patients'),
+              tooltip: 'Ir a inicio',
+            ),
           ),
         ],
       ),
@@ -102,10 +101,32 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go('/patients/${widget.patientId}/consultation'),
-        icon: const Icon(Icons.add),
-        label: const Text('Nueva Consulta'),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: "delete_patient",
+            onPressed: _deletePatient,
+            backgroundColor: Colors.red,
+            icon: const Icon(Icons.delete),
+            label: const Text('Eliminar Paciente'),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton.extended(
+            heroTag: "edit_patient",
+            onPressed: _editPatient,
+            backgroundColor: Colors.blue,
+            icon: const Icon(Icons.edit),
+            label: const Text('Editar Paciente'),
+          ),
+          const SizedBox(height: 16),
+          FloatingActionButton.extended(
+            heroTag: "new_consultation",
+            onPressed: () => context.go('/patients/${widget.patientId}/consultation'),
+            icon: const Icon(Icons.add),
+            label: const Text('Nueva Consulta'),
+          ),
+        ],
       ),
     );
   }
@@ -165,7 +186,7 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
         crossAxisCount: ResponsiveUtils.getGridColumns(context, maxColumns: 3),
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 1.4,
+        childAspectRatio: 0.85,
       ),
       itemCount: _consultations.length,
       itemBuilder: (context, index) {
@@ -187,192 +208,209 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
   }
 
   Widget _buildConsultationCard(Consultation consultation) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Card(
+      elevation: 2,
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _showConsultationDetails(consultation),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Primera fila: Diagnóstico y Fecha
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Diagnóstico
-                  Expanded(
-                    child: Text(
-                      consultation.diagnoses.isNotEmpty
-                        ? consultation.diagnoses.join(', ')
-                        : 'Sin diagnósticos',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+              // Fecha de la consulta (título principal)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 22,
+                      color: colorScheme.onPrimary,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Fecha
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
+                    const SizedBox(width: 12),
+                    Text(
                       DateFormat('dd/MM/yyyy').format(consultation.date),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      style: theme.textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        color: colorScheme.onPrimary,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
 
-              // Segunda fila: Precio y Documentos
-              Row(
-                children: [
-                  // Precio
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+              // Síntomas
+              if (consultation.symptoms.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.medical_services,
+                      size: 20,
+                      color: colorScheme.primary,
                     ),
-                    child: Text(
-                      '\$${consultation.price.toStringAsFixed(2)}',
+                    const SizedBox(width: 10),
+                    Text(
+                      'Síntomas:',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  consultation.symptoms.take(2).join(', ') +
+                  (consultation.symptoms.length > 2 ? '...' : ''),
+                  style: theme.textTheme.bodyLarge,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Diagnósticos
+              if (consultation.diagnoses.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.assignment,
+                      size: 20,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Diagnóstico:',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  consultation.diagnoses.join(', '),
+                  style: theme.textTheme.bodyLarge,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // Precio
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Icon(
+                    //   Icons.attach_money,
+                    //   size: 24,
+                    //   color: Colors.green[700],
+                    // ),
+                    // const SizedBox(width: 8),
+                    Text(
+                      '$consultation.price',
                       style: TextStyle(
                         color: Colors.green[700],
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: 20,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
 
-                  // Documentos
-                  Expanded(
-                    child: Row(
-                      children: [
-                        // PDF generado
-                        if (consultation.pdfPath != null)
-                          Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            child: InkWell(
-                              onTap: () => _openPDF(consultation),
-                              borderRadius: BorderRadius.circular(6),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.picture_as_pdf,
-                                      size: 16,
-                                      color: Colors.red[700],
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      'PDF',
-                                      style: TextStyle(
-                                        color: Colors.red[700],
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+              // Archivos adjuntos
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // PDF generado
+                  if (consultation.pdfPath != null)
+                    InkWell(
+                      onTap: () => _openPDF(consultation),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        margin: const EdgeInsets.only(right: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.picture_as_pdf,
+                              size: 20,
+                              color: Colors.red[700],
                             ),
-                          ),
-
-                        // Documentos adjuntos
-                        if (consultation.attachments.isNotEmpty)
-                          Expanded(
-                            child: Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: consultation.attachments.take(3).map((attachment) {
-                                return InkWell(
-                                  onTap: () => _openFile(attachment.filePath),
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.attach_file,
-                                          size: 12,
-                                          color: Colors.blue[700],
-                                        ),
-                                        const SizedBox(width: 2),
-                                        Flexible(
-                                          child: Text(
-                                            attachment.fileName.length > 10
-                                              ? '${attachment.fileName.substring(0, 10)}...'
-                                              : attachment.fileName,
-                                            style: TextStyle(
-                                              color: Colors.blue[700],
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-
-                        // Indicador de más documentos si hay más de 3
-                        if (consultation.attachments.length > 3)
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              '+${consultation.attachments.length - 3}',
+                            const SizedBox(width: 6),
+                            Text(
+                              'Receta',
                               style: TextStyle(
-                                color: Colors.grey[700],
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
+                                color: Colors.red[700],
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
                               ),
                             ),
-                          ),
-                      ],
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
 
-                  // Icono para ver detalles
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                  // Indicador de documentos adjuntos
+                  if (consultation.attachments.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.attach_file,
+                            size: 20,
+                            color: Colors.blue[700],
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${consultation.attachments.length} ${consultation.attachments.length == 1 ? 'archivo' : 'archivos'}',
+                            style: TextStyle(
+                              color: Colors.blue[700],
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -383,149 +421,215 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
   }
 
   Widget _buildDesktopConsultationCard(Consultation consultation) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Card(
       elevation: 2,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _showConsultationDetails(consultation),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Primera fila: Diagnóstico y Fecha
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Diagnóstico
-                  Expanded(
-                    child: Text(
-                      consultation.diagnoses.isNotEmpty
-                        ? consultation.diagnoses.join(', ')
-                        : 'Sin diagnósticos',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
+              // Fecha de la consulta (título principal)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 20,
+                      color: colorScheme.onPrimary,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Fecha
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
+                    const SizedBox(width: 10),
+                    Text(
                       DateFormat('dd/MM/yyyy').format(consultation.date),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 11,
+                        color: colorScheme.onPrimary,
                       ),
                     ),
-                  ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // Información médica
+              Column(
+                children: [
+                  // Síntomas
+                  if (consultation.symptoms.isNotEmpty) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.medical_services,
+                          size: 18,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Síntomas',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      consultation.symptoms.take(2).join(', ') +
+                      (consultation.symptoms.length > 2 ? '...' : ''),
+                      style: theme.textTheme.bodyLarge,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Diagnósticos
+                  if (consultation.diagnoses.isNotEmpty) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.assignment,
+                          size: 18,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Diagnóstico',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      consultation.diagnoses.join(', '),
+                      style: theme.textTheme.bodyLarge,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
+
               const Spacer(),
 
-              // Segunda fila: Precio y Documentos
-              Row(
-                children: [
-                  // Precio
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      '\$${consultation.price.toStringAsFixed(2)}',
+              // Precio
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Icon(
+                    //   Icons.attach_money,
+                    //   size: 20,
+                    //   color: Colors.green[700],
+                    // ),
+                    // const SizedBox(width: 6),
+                    Text(
+                      '\$${NumberFormat('#,###', 'en_US').format(consultation.price)}',
                       style: TextStyle(
                         color: Colors.green[700],
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                        fontSize: 16,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
 
-                  // Documentos
-                  Expanded(
-                    child: Row(
-                      children: [
-                        // PDF generado
-                        if (consultation.pdfPath != null)
-                          InkWell(
-                            onTap: () => _openPDF(consultation),
-                            borderRadius: BorderRadius.circular(4),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.picture_as_pdf,
-                                    size: 12,
-                                    color: Colors.red[700],
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'PDF',
-                                    style: TextStyle(
-                                      color: Colors.red[700],
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
+              // Archivos adjuntos
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // PDF generado
+                  if (consultation.pdfPath != null)
+                    InkWell(
+                      onTap: () => _openPDF(consultation),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.picture_as_pdf,
+                              size: 16,
+                              color: Colors.red[700],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Receta',
+                              style: TextStyle(
+                                color: Colors.red[700],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                  // Indicador de documentos adjuntos
+                  if (consultation.attachments.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.attach_file,
+                            size: 16,
+                            color: Colors.blue[700],
                           ),
-
-                        // Indicador de documentos adjuntos
-                        if (consultation.attachments.isNotEmpty) ...[
                           const SizedBox(width: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.attach_file,
-                                  size: 12,
-                                  color: Colors.blue[700],
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  '${consultation.attachments.length}',
-                                  style: TextStyle(
-                                    color: Colors.blue[700],
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                          Text(
+                            '${consultation.attachments.length} ${consultation.attachments.length == 1 ? 'archivo' : 'archivos'}',
+                            style: TextStyle(
+                              color: Colors.blue[700],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
-                      ],
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],
@@ -596,7 +700,7 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
                       border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                     ),
                     child: Text(
-                      '\$${consultation.price.toStringAsFixed(2)}',
+                      '\$${NumberFormat('#,###', 'en_US').format(consultation.price)}',
                       style: TextStyle(
                         color: Colors.green[700],
                         fontWeight: FontWeight.bold,
@@ -634,7 +738,7 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'PDF Receta',
+                                      'Receta',
                                       style: TextStyle(
                                         color: Colors.red[700],
                                         fontWeight: FontWeight.w500,
@@ -816,16 +920,21 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
       await ref.read(consultationProvider.notifier).deleteConsultation(consultation.id!);
 
       if (mounted) {
-        // Cerrar el diálogo si está abierto
+        // Cerrar el diálogo de detalles de la consulta
         navigator.pop();
 
-        // Recargar las consultas
         await _loadData();
 
         scaffoldMessenger.showSnackBar(
           const SnackBar(
-            content: Text('Consulta eliminada correctamente'),
-            backgroundColor: Colors.green,
+            content: Text(
+              'Consulta eliminada correctamente',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -839,6 +948,91 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
         );
       }
     }
+  }
+
+  void _editPatient() {
+    if (_patient != null) {
+      context.go('/patients/add', extra: _patient);
+    }
+  }
+
+  Future<void> _deletePatient() async {
+    if (_patient == null) return;
+
+    final confirmed = await _showDeletePatientDialog();
+    if (!confirmed) return;
+
+    try {
+      await ref.read(patientProvider.notifier).removePatient(_patient!.id!);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${_patient!.name} ha sido eliminado',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+
+        // Navigate back to patients list
+        context.go('/patients');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error al eliminar paciente: $e',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<bool> _showDeletePatientDialog() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar eliminación'),
+        content: RichText(
+          text: TextSpan(
+            style: Theme.of(context).textTheme.bodyMedium,
+            children: [
+              const TextSpan(text: '¿Estás seguro de que deseas eliminar a '),
+              TextSpan(
+                text: _patient?.name ?? 'este paciente',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const TextSpan(text: '?\n\nEsta acción no se puede deshacer y se eliminarán también todas las consultas asociadas.'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 }
 
@@ -855,15 +1049,43 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isMobile = ResponsiveUtils.isMobile(context);
+    final isTablet = ResponsiveUtils.isTablet(context);
+
+    // Responsive sizing
+    final dialogWidth = isMobile
+        ? MediaQuery.of(context).size.width * 0.95  // Use most of screen width on mobile
+        : (isTablet
+            ? MediaQuery.of(context).size.width * 0.85  // Use more space on tablet
+            : MediaQuery.of(context).size.width * 0.65); // Keep current desktop size
+
+    final dialogHeight = isMobile
+        ? MediaQuery.of(context).size.height * 0.9   // Use most of screen height on mobile
+        : (isTablet
+            ? MediaQuery.of(context).size.height * 0.8  // Use more space on tablet
+            : MediaQuery.of(context).size.height * 0.95); // Increased desktop size
+
+    final maxWidth = isMobile
+        ? MediaQuery.of(context).size.width * 0.98
+        : (isTablet
+            ? MediaQuery.of(context).size.width * 0.88
+            : MediaQuery.of(context).size.width * 0.68);
+
+    final maxHeight = isMobile
+        ? MediaQuery.of(context).size.height * 0.95
+        : (isTablet
+            ? MediaQuery.of(context).size.height * 0.85
+            : MediaQuery.of(context).size.height * 0.85);
+
     return Dialog(
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.65,
-        height: MediaQuery.of(context).size.height * 0.6,
+        width: dialogWidth,
+        height: dialogHeight,
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.68,
-          maxHeight: MediaQuery.of(context).size.height * 0.65,
+          maxWidth: maxWidth,
+          maxHeight: maxHeight,
         ),
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -873,21 +1095,17 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
                 Icon(
                   Icons.medical_information,
                   color: Theme.of(context).colorScheme.primary,
-                  size: 28,
+                  size: isMobile ? 24 : 28,
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: isMobile ? 8 : 12),
                 Expanded(
                   child: Text(
                     'Detalles de la Consulta',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 20 : null,
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red[700]),
-                  onPressed: () => _showDeleteDialog(context),
-                  tooltip: 'Eliminar consulta',
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -895,14 +1113,15 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: isMobile ? 8 : 12),
             Text(
               DateFormat('dd/MM/yyyy - HH:mm').format(consultation.date),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Colors.grey[600],
+                fontSize: isMobile ? 14 : null,
               ),
             ),
-            const Divider(height: 32),
+            Divider(height: isMobile ? 24 : 32),
 
             // Contenido scrolleable
             Expanded(
@@ -910,55 +1129,40 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Información básica
-                    _buildDetailSection(
-                      'Información General',
-                      [
-                        'Peso: ${consultation.weight.toStringAsFixed(1)} kg',
-                        'Precio: \$${consultation.price.toStringAsFixed(2)}',
-                        if (consultation.observations?.isNotEmpty == true)
-                          'Observaciones: ${consultation.observations}',
-                      ],
-                    ),
-                    const SizedBox(height: 24),
+                    // Información básica en tabla de dos columnas
+                    _buildBasicInfoTable(context, consultation, isMobile),
+                    SizedBox(height: isMobile ? 20 : 24),
 
-                    // Síntomas
-                    _buildDetailSection(
-                      'Síntomas (${consultation.symptoms.length})',
-                      consultation.symptoms,
-                    ),
-                    const SizedBox(height: 24),
+                    // Información médica en tabla de dos columnas
+                    _buildMedicalInfoTable(context, consultation, isMobile),
+                    SizedBox(height: isMobile ? 20 : 24),
 
-                    // Medicamentos
-                    if (consultation.medications.isNotEmpty) ...[
-                      _buildMedicationSection(consultation.medications),
-                      const SizedBox(height: 24),
+                    // Archivos adjuntos y receta
+                    if (consultation.attachments.isNotEmpty || consultation.pdfPath != null) ...[
+                      _buildAttachmentsSection(context, consultation, isMobile),
+                      SizedBox(height: isMobile ? 16 : 24),
                     ],
-
-                    // Tratamientos
-                    if (consultation.treatments.isNotEmpty) ...[
-                      _buildDetailSection(
-                        'Tratamientos (${consultation.treatments.length})',
-                        consultation.treatments,
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    // Diagnósticos
-                    _buildDetailSection(
-                      'Diagnósticos (${consultation.diagnoses.length})',
-                      consultation.diagnoses,
-                    ),
-
-                    // Archivos adjuntos
-                    if (consultation.attachments.isNotEmpty) ...[
-                      const SizedBox(height: 24),
-                      _buildAttachmentsSection(context, consultation.attachments),
-                    ],
-
-                    // Espaciado final
-                    const SizedBox(height: 24),
                   ],
+                ),
+              ),
+            ),
+
+            // Delete button at the bottom
+            const Divider(),
+            SizedBox(height: isMobile ? 8 : 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showDeleteDialog(context),
+                icon: Icon(Icons.delete, color: Colors.red[700]),
+                label: const Text('Eliminar Consulta'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red[700],
+                  side: BorderSide(color: Colors.red[300]!),
+                  padding: EdgeInsets.symmetric(
+                    vertical: isMobile ? 12 : 16,
+                    horizontal: isMobile ? 16 : 24,
+                  ),
                 ),
               ),
             ),
@@ -968,166 +1172,223 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailSection(String title, List<String> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        const SizedBox(height: 12),
-        if (items.isEmpty)
-          Center(
-            child: Text(
-              'Sin elementos',
+  Widget _buildBasicInfoTable(BuildContext context, Consultation consultation, bool isMobile) {
+    return Card(
+      elevation: 1,
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Información General',
               style: TextStyle(
-                color: Colors.grey[600],
-                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.bold,
+                fontSize: isMobile ? 16 : 18,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
-          )
-        else
-          ...items.map((item) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 16),
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(1),
+                1: FlexColumnWidth(2),
+              },
               children: [
-                const Text('• ', style: TextStyle(fontSize: 16)),
-                Expanded(
-                  child: Text(
-                    item,
-                    style: const TextStyle(fontSize: 15, height: 1.4),
-                  ),
-                ),
+                _buildTableRow('Peso:', '${consultation.weight?.toStringAsFixed(1)} kg', isMobile),
+                _buildTableRow('Precio:', '\$${NumberFormat('#,###', 'en_US').format(consultation.price)}', isMobile),
+                if (consultation.observations?.isNotEmpty == true)
+                  _buildTableRow('Observaciones:', consultation.observations!, isMobile),
               ],
             ),
-          )),
-      ],
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildMedicationSection(List<Medication> medications) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Medicamentos (${medications.length})',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ...medications.map((med) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.blue.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                med.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+  Widget _buildMedicalInfoTable(BuildContext context, Consultation consultation, bool isMobile) {
+    return Card(
+      elevation: 1,
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Información Médica',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: isMobile ? 16 : 18,
+                color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(height: 6),
-              Text(
-                'Dosis: ${med.dosage}',
-                style: const TextStyle(fontSize: 15, height: 1.3),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Frecuencia: ${med.frequency}',
-                style: const TextStyle(fontSize: 15, height: 1.3),
-              ),
-              if (med.instructions?.isNotEmpty == true) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Instrucciones: ${med.instructions!}',
-                  style: const TextStyle(fontSize: 15, height: 1.3),
-                ),
+            ),
+            const SizedBox(height: 16),
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(1),
+                1: FlexColumnWidth(2),
+              },
+              children: [
+                _buildTableRow('Síntomas:', consultation.symptoms.join(', '), isMobile),
+                if (consultation.medications.isNotEmpty)
+                  _buildTableRow('Medicamentos:', _formatMedications(consultation.medications), isMobile),
+                if (consultation.treatments.isNotEmpty)
+                  _buildTableRow('Tratamientos:', consultation.treatments.join(', '), isMobile),
+                _buildTableRow('Diagnósticos:', consultation.diagnoses.join(', '), isMobile),
               ],
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  TableRow _buildTableRow(String label, String value, bool isMobile) {
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12.0, right: 16.0),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: isMobile ? 14 : 15,
+              color: Colors.grey[700],
+            ),
           ),
-        )),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12.0),
+          child: Text(
+            value.isEmpty ? 'No especificado' : value,
+            style: TextStyle(
+              fontSize: isMobile ? 14 : 15,
+              height: 1.4,
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildAttachmentsSection(BuildContext context, List<Attachment> attachments) {
+  String _formatMedications(List<Medication> medications) {
+    return medications.map((med) => '${med.name} - ${med.dosage} - ${med.frequency}').join('\n');
+  }
+
+
+  Widget _buildAttachmentsSection(BuildContext context, Consultation consultation, bool isMobile) {
+    final totalFiles = consultation.attachments.length + (consultation.pdfPath != null ? 1 : 0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Archivos Adjuntos (${attachments.length})',
-          style: const TextStyle(
+          'Archivos ($totalFiles)',
+          style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: isMobile ? 16 : 18,
           ),
         ),
         const SizedBox(height: 12),
-        ...attachments.map((attachment) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: InkWell(
-            onTap: () => onOpenFile(attachment.filePath, attachment.fileType),
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.1),
+
+        // Lista de archivos en chips/botones moderados
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            // PDF de receta si existe
+            if (consultation.pdfPath != null)
+              InkWell(
+                onTap: () => onOpenFile(consultation.pdfPath!, 'PDF'),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.attach_file,
-                    size: 20,
-                    color: Colors.blue[700],
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 12 : 16,
+                    vertical: isMobile ? 8 : 10,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          attachment.fileName,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.blue[700],
-                          ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.picture_as_pdf,
+                        size: isMobile ? 16 : 18,
+                        color: Colors.red[700],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Receta Médica',
+                        style: TextStyle(
+                          fontSize: isMobile ? 13 : 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.red[700],
                         ),
-                        Text(
-                          'Tipo: ${attachment.fileType}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.open_in_new,
+                        size: isMobile ? 14 : 16,
+                        color: Colors.red[700],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            // Archivos adjuntos
+            ...consultation.attachments.map((attachment) => InkWell(
+              onTap: () => onOpenFile(attachment.filePath, attachment.fileType),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 12 : 16,
+                  vertical: isMobile ? 8 : 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.attach_file,
+                      size: isMobile ? 16 : 18,
+                      color: Colors.blue[700],
                     ),
-                  ),
-                  Icon(
-                    Icons.open_in_new,
-                    size: 18,
-                    color: Colors.blue[700],
-                  ),
-                ],
+                    const SizedBox(width: 8),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: isMobile ? 120 : 150,
+                      ),
+                      child: Text(
+                        attachment.fileName,
+                        style: TextStyle(
+                          fontSize: isMobile ? 13 : 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.blue[700],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.open_in_new,
+                      size: isMobile ? 14 : 16,
+                      color: Colors.blue[700],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
-        )),
+            )),
+          ],
+        ),
       ],
     );
   }

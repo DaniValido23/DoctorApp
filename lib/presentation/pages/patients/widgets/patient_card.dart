@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:doctor_app/data/models/patient.dart';
-import 'package:doctor_app/presentation/providers/patient_provider.dart';
 
 class PatientCard extends ConsumerWidget {
   final Patient patient;
@@ -40,111 +40,83 @@ class PatientCard extends ConsumerWidget {
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Avatar más grande para grid
+              // Avatar más grande
               CircleAvatar(
-                radius: 32,
+                radius: 40,
                 backgroundColor: colorScheme.primary,
                 child: Text(
                   _getInitials(patient.name),
                   style: TextStyle(
                     color: colorScheme.onPrimary,
                     fontWeight: FontWeight.bold,
-                    fontSize: 20,
+                    fontSize: 24,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // Nombre
               Text(
                 patient.name,
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
 
               // Edad y género
               Text(
                 '${patient.age} años • ${patient.gender}',
-                style: theme.textTheme.bodySmall?.copyWith(
+                style: theme.textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
-              // Teléfono
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.phone,
-                    size: 14,
-                    color: colorScheme.onSurfaceVariant,
+              // Teléfono - clickeable para WhatsApp
+              InkWell(
+                onTap: () => _openWhatsApp(patient.phone),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
                   ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      patient.phone,
-                      style: theme.textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-
-              const Spacer(),
-
-              // Menú de acciones
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.history, size: 20),
-                    onPressed: () => _handleMenuAction(context, ref, 'history'),
-                    tooltip: 'Ver consultas',
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.medical_services, size: 20),
-                    onPressed: () => _handleMenuAction(context, ref, 'consultation'),
-                    tooltip: 'Nueva consulta',
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) => _handleMenuAction(context, ref, value),
-                    icon: const Icon(Icons.more_vert, size: 20),
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 18),
-                            SizedBox(width: 8),
-                            Text('Editar'),
-                          ],
-                        ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.phone,
+                        size: 16,
+                        color: Colors.green[700],
                       ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 18, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Eliminar', style: TextStyle(color: Colors.red)),
-                          ],
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          patient.phone,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green[700],
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -207,62 +179,12 @@ class PatientCard extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) => _handleMenuAction(context, ref, value),
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'history',
-                        child: Row(
-                          children: [
-                            Icon(Icons.history, size: 20),
-                            SizedBox(width: 8),
-                            Text('Ver Consultas'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'consultation',
-                        child: Row(
-                          children: [
-                            Icon(Icons.medical_services, size: 20),
-                            SizedBox(width: 8),
-                            Text('Nueva Consulta'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Editar'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 20, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Eliminar', style: TextStyle(color: Colors.red)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
               const SizedBox(height: 12),
 
               // Información de contacto
-              _buildInfoRow(
-                context,
-                Icons.phone,
-                'Teléfono',
-                patient.phone,
-              ),
+              _buildPhoneRow(context, patient.phone),
 
               if (patient.email?.isNotEmpty == true) ...[
                 const SizedBox(height: 8),
@@ -293,6 +215,60 @@ class PatientCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhoneRow(BuildContext context, String phoneNumber) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Icon(
+          Icons.phone,
+          size: 16,
+          color: Colors.green[700],
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Teléfono: ',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Expanded(
+          child: InkWell(
+            onTap: () => _openWhatsApp(phoneNumber),
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    phoneNumber,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    Icons.chat,
+                    size: 12,
+                    color: Colors.green[700],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -358,84 +334,37 @@ class PatientCard extends ConsumerWidget {
     }
   }
 
-  Future<void> _handleMenuAction(BuildContext context, WidgetRef ref, String action) async {
-    switch (action) {
-      case 'history':
-        if (patient.id != null) {
-          context.go('/patients/${patient.id}');
-        }
-        break;
+  Future<void> _openWhatsApp(String phoneNumber) async {
+    try {
+      // Limpiar el número telefónico (remover espacios, guiones, paréntesis)
+      String cleanNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
 
-      case 'consultation':
-        if (patient.id != null) {
-          context.go('/patients/${patient.id}/consultation');
-        }
-        break;
+      // Agregar prefijo +52 de México si no lo tiene
+      if (!cleanNumber.startsWith('+52') && !cleanNumber.startsWith('52')) {
+        cleanNumber = '+52$cleanNumber';
+      } else if (cleanNumber.startsWith('52') && !cleanNumber.startsWith('+52')) {
+        cleanNumber = '+$cleanNumber';
+      }
 
-      case 'edit':
-        // TODO: Implementar edición de paciente
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Función de editar próximamente')),
-        );
-        break;
+      // URL de WhatsApp
+      final whatsappUrl = 'https://wa.me/$cleanNumber';
+      final uri = Uri.parse(whatsappUrl);
 
-      case 'delete':
-        final confirmed = await _showDeleteConfirmationDialog(context);
-        if (confirmed && patient.id != null) {
-          try {
-            await ref.read(patientProvider.notifier).removePatient(patient.id!);
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('${patient.name} ha sido eliminado')),
-              );
-            }
-          } catch (e) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Error al eliminar: $e'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          }
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        // Si no se puede abrir WhatsApp, intentar abrir el dialer
+        final telUrl = 'tel:$cleanNumber';
+        final telUri = Uri.parse(telUrl);
+
+        if (await canLaunchUrl(telUri)) {
+          await launchUrl(telUri);
         }
-        break;
+      }
+    } catch (e) {
+      // En caso de error, no hacer nada para mantener la UX fluida
+      debugPrint('Error opening WhatsApp: $e');
     }
   }
 
-  Future<bool> _showDeleteConfirmationDialog(BuildContext context) async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar eliminación'),
-        content: RichText(
-          text: TextSpan(
-            style: Theme.of(context).textTheme.bodyMedium,
-            children: [
-              const TextSpan(text: '¿Estás seguro de que deseas eliminar a '),
-              TextSpan(
-                text: patient.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const TextSpan(text: '?\n\nEsta acción no se puede deshacer y se eliminarán también todas las consultas asociadas.'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
-    ) ?? false;
-  }
 }

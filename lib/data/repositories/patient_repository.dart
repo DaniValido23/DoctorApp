@@ -193,4 +193,24 @@ class PatientRepository {
 
     return maps.isNotEmpty;
   }
+
+  // Check if patient exists by name
+  Future<bool> patientExistsByName(String name, {int? excludeId}) async {
+    final db = await _database;
+    String whereClause = '${DatabaseConstants.columnPatientName} = ?';
+    List<dynamic> whereArgs = [name.trim()];
+
+    if (excludeId != null) {
+      whereClause += ' AND ${DatabaseConstants.columnId} != ?';
+      whereArgs.add(excludeId);
+    }
+
+    final List<Map<String, dynamic>> maps = await db.query(
+      DatabaseConstants.patientsTable,
+      where: whereClause,
+      whereArgs: whereArgs,
+    );
+
+    return maps.isNotEmpty;
+  }
 }
