@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class VitalSignsSection extends StatelessWidget {
   final TextEditingController temperatureController;
@@ -148,6 +149,9 @@ class VitalSignsSection extends StatelessWidget {
         fillColor: Colors.orange.withValues(alpha: 0.05),
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+      ],
       validator: (value) {
         if (value?.isEmpty == true) return null; // Optional field
         final temp = double.tryParse(value!);
@@ -174,6 +178,9 @@ class VitalSignsSection extends StatelessWidget {
               fillColor: Colors.red.withValues(alpha: 0.05),
             ),
             keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
             validator: (value) {
               if (value?.isEmpty == true) return null; // Optional
               final systolic = int.tryParse(value!);
@@ -206,6 +213,9 @@ class VitalSignsSection extends StatelessWidget {
               fillColor: Colors.red.withValues(alpha: 0.05),
             ),
             keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
             validator: (value) {
               if (value?.isEmpty == true) return null; // Optional
               final diastolic = int.tryParse(value!);
@@ -232,6 +242,9 @@ class VitalSignsSection extends StatelessWidget {
         fillColor: Colors.blue.withValues(alpha: 0.05),
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+      ],
       validator: (value) {
         if (value?.isEmpty == true) return null; // Optional field
         final oxygen = double.tryParse(value!);
@@ -255,6 +268,9 @@ class VitalSignsSection extends StatelessWidget {
         fillColor: Colors.green.withValues(alpha: 0.05),
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+      ],
       validator: (value) {
         if (value?.isEmpty == true) return null; // Optional field
         final weight = double.tryParse(value!);
@@ -278,6 +294,9 @@ class VitalSignsSection extends StatelessWidget {
         fillColor: Colors.purple.withValues(alpha: 0.05),
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+      ],
       validator: (value) {
         if (value?.isEmpty == true) return null; // Optional field
         final height = double.tryParse(value!);

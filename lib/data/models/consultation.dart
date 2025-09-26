@@ -22,7 +22,6 @@ class Consultation with _$Consultation {
     required List<String> symptoms,
     required List<String> diagnoses,
     required List<Medication> medications,
-    required List<String> treatments,
     required List<Attachment> attachments,
     String? observations,
     required double price,

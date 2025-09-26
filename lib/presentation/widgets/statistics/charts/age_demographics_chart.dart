@@ -35,7 +35,7 @@ class AgeDemographicsChart extends ConsumerWidget {
         title: 'Demografía por Edad',
         icon: Icons.groups,
         color: Colors.deepPurple,
-        chart: data.ageDemographics.isEmpty
+        chart: _hasNoData(data.ageDemographics)
             ? const Center(child: Text('No hay datos disponibles'))
             : _buildChart(context, data.ageDemographics),
         isMobile: isMobile,
@@ -153,6 +153,16 @@ class AgeDemographicsChart extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Check if there's no meaningful data to display
+  bool _hasNoData(Map<String, int> ageData) {
+    // Check if map is empty
+    if (ageData.isEmpty) return true;
+
+    // Check if all values are 0
+    final totalCount = ageData.values.fold(0, (sum, count) => sum + count);
+    return totalCount == 0;
   }
 
   String _getShortName(String group) {

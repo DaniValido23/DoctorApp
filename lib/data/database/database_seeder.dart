@@ -189,15 +189,6 @@ class DatabaseSeeder {
       }
     }
 
-    // Seleccionar tratamientos aleatorios (1-2)
-    final treatmentCount = 1 + _random.nextInt(2);
-    final selectedTreatments = <String>[];
-    for (int i = 0; i < treatmentCount; i++) {
-      final treatment = SeedData.treatments[_random.nextInt(SeedData.treatments.length)];
-      if (!selectedTreatments.contains(treatment)) {
-        selectedTreatments.add(treatment);
-      }
-    }
 
     // Generar medicamentos aleatorios (1-3)
     final medicationCount = 1 + _random.nextInt(3);
@@ -219,7 +210,6 @@ class DatabaseSeeder {
       date: consultationDate,
       symptoms: selectedSymptoms,
       medications: selectedMedications,
-      treatments: selectedTreatments,
       diagnoses: selectedDiagnoses,
       weight: weight,
       observations: _generateRandomObservations(),
@@ -287,7 +277,6 @@ class DatabaseSeeder {
       final consultationId = consultation.id!;
 
       await _insertSymptoms(txn, consultationId, consultation.symptoms);
-      await _insertTreatments(txn, consultationId, consultation.treatments);
       await _insertDiagnoses(txn, consultationId, consultation.diagnoses);
 
       for (final medication in consultation.medications) {
@@ -316,19 +305,6 @@ class DatabaseSeeder {
     }
   }
 
-  Future<void> _insertTreatments(Transaction txn, int consultationId, List<String> treatments) async {
-    for (final treatmentName in treatments) {
-      final treatmentId = await _getOrInsertTreatment(txn, treatmentName);
-      await txn.insert(
-        DatabaseConstants.consultationTreatmentsTable,
-        {
-          DatabaseConstants.columnJunctionConsultationId: consultationId,
-          DatabaseConstants.columnJunctionTreatmentId: treatmentId,
-        },
-        conflictAlgorithm: ConflictAlgorithm.ignore,
-      );
-    }
-  }
 
   Future<void> _insertDiagnoses(Transaction txn, int consultationId, List<String> diagnoses) async {
     for (final diagnosisName in diagnoses) {
@@ -391,25 +367,6 @@ class DatabaseSeeder {
     );
   }
 
-  Future<int> _getOrInsertTreatment(Transaction txn, String treatmentName) async {
-    final result = await txn.query(
-      DatabaseConstants.treatmentsTable,
-      where: '${DatabaseConstants.columnTreatmentName} = ?',
-      whereArgs: [treatmentName],
-    );
-
-    if (result.isNotEmpty) {
-      return result.first[DatabaseConstants.columnId] as int;
-    }
-
-    return await txn.insert(
-      DatabaseConstants.treatmentsTable,
-      {
-        DatabaseConstants.columnTreatmentName: treatmentName,
-        DatabaseConstants.columnCreatedAt: DateTime.now().toIso8601String(),
-      },
-    );
-  }
 
   Future<int> _getOrInsertDiagnosis(Transaction txn, String diagnosisName) async {
     final result = await txn.query(

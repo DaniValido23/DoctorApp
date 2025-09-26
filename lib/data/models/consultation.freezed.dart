@@ -35,7 +35,6 @@ mixin _$Consultation {
   List<String> get symptoms => throw _privateConstructorUsedError;
   List<String> get diagnoses => throw _privateConstructorUsedError;
   List<Medication> get medications => throw _privateConstructorUsedError;
-  List<String> get treatments => throw _privateConstructorUsedError;
   List<Attachment> get attachments => throw _privateConstructorUsedError;
   String? get observations => throw _privateConstructorUsedError;
   double get price => throw _privateConstructorUsedError;
@@ -71,7 +70,6 @@ abstract class $ConsultationCopyWith<$Res> {
     List<String> symptoms,
     List<String> diagnoses,
     List<Medication> medications,
-    List<String> treatments,
     List<Attachment> attachments,
     String? observations,
     double price,
@@ -106,7 +104,6 @@ class _$ConsultationCopyWithImpl<$Res, $Val extends Consultation>
     Object? symptoms = null,
     Object? diagnoses = null,
     Object? medications = null,
-    Object? treatments = null,
     Object? attachments = null,
     Object? observations = freezed,
     Object? price = null,
@@ -162,10 +159,6 @@ class _$ConsultationCopyWithImpl<$Res, $Val extends Consultation>
                 ? _value.medications
                 : medications // ignore: cast_nullable_to_non_nullable
                       as List<Medication>,
-            treatments: null == treatments
-                ? _value.treatments
-                : treatments // ignore: cast_nullable_to_non_nullable
-                      as List<String>,
             attachments: null == attachments
                 ? _value.attachments
                 : attachments // ignore: cast_nullable_to_non_nullable
@@ -210,7 +203,6 @@ abstract class _$$ConsultationImplCopyWith<$Res>
     List<String> symptoms,
     List<String> diagnoses,
     List<Medication> medications,
-    List<String> treatments,
     List<Attachment> attachments,
     String? observations,
     double price,
@@ -244,7 +236,6 @@ class __$$ConsultationImplCopyWithImpl<$Res>
     Object? symptoms = null,
     Object? diagnoses = null,
     Object? medications = null,
-    Object? treatments = null,
     Object? attachments = null,
     Object? observations = freezed,
     Object? price = null,
@@ -300,10 +291,6 @@ class __$$ConsultationImplCopyWithImpl<$Res>
             ? _value._medications
             : medications // ignore: cast_nullable_to_non_nullable
                   as List<Medication>,
-        treatments: null == treatments
-            ? _value._treatments
-            : treatments // ignore: cast_nullable_to_non_nullable
-                  as List<String>,
         attachments: null == attachments
             ? _value._attachments
             : attachments // ignore: cast_nullable_to_non_nullable
@@ -341,7 +328,6 @@ class _$ConsultationImpl implements _Consultation {
     required final List<String> symptoms,
     required final List<String> diagnoses,
     required final List<Medication> medications,
-    required final List<String> treatments,
     required final List<Attachment> attachments,
     this.observations,
     required this.price,
@@ -349,7 +335,6 @@ class _$ConsultationImpl implements _Consultation {
   }) : _symptoms = symptoms,
        _diagnoses = diagnoses,
        _medications = medications,
-       _treatments = treatments,
        _attachments = attachments;
 
   factory _$ConsultationImpl.fromJson(Map<String, dynamic> json) =>
@@ -407,14 +392,6 @@ class _$ConsultationImpl implements _Consultation {
     return EqualUnmodifiableListView(_medications);
   }
 
-  final List<String> _treatments;
-  @override
-  List<String> get treatments {
-    if (_treatments is EqualUnmodifiableListView) return _treatments;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(_treatments);
-  }
-
   final List<Attachment> _attachments;
   @override
   List<Attachment> get attachments {
@@ -432,7 +409,7 @@ class _$ConsultationImpl implements _Consultation {
 
   @override
   String toString() {
-    return 'Consultation(id: $id, patientId: $patientId, date: $date, bodyTemperature: $bodyTemperature, bloodPressureSystolic: $bloodPressureSystolic, bloodPressureDiastolic: $bloodPressureDiastolic, oxygenSaturation: $oxygenSaturation, weight: $weight, height: $height, symptoms: $symptoms, diagnoses: $diagnoses, medications: $medications, treatments: $treatments, attachments: $attachments, observations: $observations, price: $price, pdfPath: $pdfPath)';
+    return 'Consultation(id: $id, patientId: $patientId, date: $date, bodyTemperature: $bodyTemperature, bloodPressureSystolic: $bloodPressureSystolic, bloodPressureDiastolic: $bloodPressureDiastolic, oxygenSaturation: $oxygenSaturation, weight: $weight, height: $height, symptoms: $symptoms, diagnoses: $diagnoses, medications: $medications, attachments: $attachments, observations: $observations, price: $price, pdfPath: $pdfPath)';
   }
 
   @override
@@ -464,10 +441,6 @@ class _$ConsultationImpl implements _Consultation {
               _medications,
             ) &&
             const DeepCollectionEquality().equals(
-              other._treatments,
-              _treatments,
-            ) &&
-            const DeepCollectionEquality().equals(
               other._attachments,
               _attachments,
             ) &&
@@ -493,7 +466,6 @@ class _$ConsultationImpl implements _Consultation {
     const DeepCollectionEquality().hash(_symptoms),
     const DeepCollectionEquality().hash(_diagnoses),
     const DeepCollectionEquality().hash(_medications),
-    const DeepCollectionEquality().hash(_treatments),
     const DeepCollectionEquality().hash(_attachments),
     observations,
     price,
@@ -528,7 +500,6 @@ abstract class _Consultation implements Consultation {
     required final List<String> symptoms,
     required final List<String> diagnoses,
     required final List<Medication> medications,
-    required final List<String> treatments,
     required final List<Attachment> attachments,
     final String? observations,
     required final double price,
@@ -563,8 +534,6 @@ abstract class _Consultation implements Consultation {
   List<String> get diagnoses;
   @override
   List<Medication> get medications;
-  @override
-  List<String> get treatments;
   @override
   List<Attachment> get attachments;
   @override

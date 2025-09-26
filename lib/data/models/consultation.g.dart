@@ -26,9 +26,6 @@ _$ConsultationImpl _$$ConsultationImplFromJson(Map<String, dynamic> json) =>
       medications: (json['medications'] as List<dynamic>)
           .map((e) => Medication.fromJson(e as Map<String, dynamic>))
           .toList(),
-      treatments: (json['treatments'] as List<dynamic>)
-          .map((e) => e as String)
-          .toList(),
       attachments: (json['attachments'] as List<dynamic>)
           .map((e) => Attachment.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -51,7 +48,6 @@ Map<String, dynamic> _$$ConsultationImplToJson(_$ConsultationImpl instance) =>
       'symptoms': instance.symptoms,
       'diagnoses': instance.diagnoses,
       'medications': instance.medications,
-      'treatments': instance.treatments,
       'attachments': instance.attachments,
       'observations': instance.observations,
       'price': instance.price,

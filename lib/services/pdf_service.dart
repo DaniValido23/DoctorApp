@@ -104,10 +104,6 @@ class PDFService {
                         pw.SizedBox(height: 10),
                       ],
 
-                      if (consultation.treatments.isNotEmpty) ...[
-                        _buildTreatmentsSection(consultation.treatments),
-                        pw.SizedBox(height: 10),
-                      ],
 
                       if (consultation.observations != null && consultation.observations!.isNotEmpty) ...[
                         _buildObservationsSection(consultation.observations!),
@@ -482,44 +478,6 @@ class PDFService {
     );
   }
 
-  pw.Widget _buildTreatmentsSection(List<String> treatments) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text(
-          'TRATAMIENTOS ADICIONALES',
-          style: pw.TextStyle(
-            fontSize: 10,
-            fontWeight: pw.FontWeight.bold,
-            color: darkBlue,
-          ),
-        ),
-        pw.SizedBox(height: 4),
-        ...treatments.asMap().entries.map((entry) => pw.Padding(
-          padding: const pw.EdgeInsets.only(bottom: 2),
-          child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                '${entry.key + 1}. ',
-                style: pw.TextStyle(
-                  fontSize: 9, 
-                  color: darkBlue,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Expanded(
-                child: pw.Text(
-                  entry.value,
-                  style: const pw.TextStyle(fontSize: 9),
-                ),
-              ),
-            ],
-          ),
-        )),
-      ],
-    );
-  }
 
   pw.Widget _buildMedicationDetail(String label, String value) {
     return pw.Padding(

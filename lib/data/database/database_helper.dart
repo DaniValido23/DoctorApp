@@ -43,13 +43,11 @@ class DatabaseHelper {
     batch.execute(ConsultationsTable.createTable);
     batch.execute(MedicationsTable.createTable);
     batch.execute(SymptomsTable.createTable);
-    batch.execute(TreatmentsTable.createTable);
     batch.execute(DiagnosesTable.createTable);
     batch.execute(AttachmentsTable.createTable);
 
     // Create junction tables
     batch.execute(ConsultationSymptomsTable.createTable);
-    batch.execute(ConsultationTreatmentsTable.createTable);
     batch.execute(ConsultationDiagnosesTable.createTable);
 
     await batch.commit();

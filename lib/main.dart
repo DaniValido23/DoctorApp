@@ -24,6 +24,14 @@ void main() async {
     appLogger.e('Error initializing app folder structure', error: e);
   }
 
+  // Initialize error logging
+  try {
+    await ErrorLogger.initialize();
+  } catch (e) {
+    // Log error but continue app startup
+    appLogger.e('Error initializing error logger', error: e);
+  }
+
   runApp(
     const ProviderScope(
       child: DoctorApp(),

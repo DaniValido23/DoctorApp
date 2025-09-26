@@ -14,6 +14,9 @@ class PatientNotifier extends StateNotifier<AsyncValue<List<Patient>>> {
     try {
       final patients = await _repository.getAllPatients();
       state = AsyncValue.data(patients);
+
+      // Initialize folders for existing patients (async, don't wait)
+      FileOrganizationService.initializeExistingPatientFolders(patients);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
@@ -37,7 +40,16 @@ class PatientNotifier extends StateNotifier<AsyncValue<List<Patient>>> {
 
   Future<void> updatePatient(Patient updatedPatient) async {
     try {
+      // Get the old patient data before updating
+      final oldPatient = await _repository.getPatientById(updatedPatient.id!);
+
+      // Update in database
       await _repository.updatePatient(updatedPatient);
+
+      // Rename folder if patient name changed
+      if (oldPatient != null) {
+        await FileOrganizationService.renamePatientFolder(oldPatient, updatedPatient);
+      }
 
       state.whenData((patients) {
         final updatedList = patients.map((patient) =>

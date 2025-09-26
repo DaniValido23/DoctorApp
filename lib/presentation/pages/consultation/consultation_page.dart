@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
@@ -37,7 +38,6 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
   // Data
   List<String> _symptoms = [];
   List<Medication> _medications = [];
-  List<String> _treatments = [];
   List<String> _diagnoses = [];
   List<Attachment> _attachments = [];
 
@@ -162,7 +162,7 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
 
           const SizedBox(height: 16),
 
-          // Row 2: Medicamentos, Plan de tratamiento
+          // Row 2: Medicamentos, Observaciones
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -181,13 +181,9 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildSection(
-                    title: 'Plan de tratamiento',
-                    icon: Icons.healing,
-                    child: TreatmentForm(
-                      initialTreatments: _treatments,
-                      onTreatmentsChanged: (treatments) =>
-                          setState(() => _treatments = treatments),
-                    ),
+                    title: 'Observaciones',
+                    icon: Icons.notes,
+                    child: _buildObservationsField(),
                   ),
                 ),
               ],
@@ -196,44 +192,36 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
 
           const SizedBox(height: 16),
 
-          // Row 3: Observaciones (1/2), Precio de consulta (1/4), Estudios médicos (1/4)
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 2, // 1/2 del espacio
-                  child: _buildSection(
-                    title: 'Observaciones',
-                    icon: Icons.notes,
-                    child: _buildObservationsField(),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 1, // 1/4 del espacio
-                  child: _buildSection(
-                    title: 'Precio de consulta',
-                    icon: Icons.attach_money,
-                    child: _buildPriceField(),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 1, // 1/4 del espacio
-                  child: _buildSection(
-                    title: 'Estudios médicos',
-                    icon: Icons.attach_file,
-                    child: AttachmentWidget(
-                      initialAttachments: _attachments,
-                      onAttachmentsChanged: (attachments) =>
-                          setState(() => _attachments = attachments),
-                      patient: _patient,
-                      consultationDate: DateTime.now(),
+          // Row 3: Precio de consulta (1/2), Estudios médicos (1/2)
+          SizedBox(
+            height: 300, // Altura menor para estas cards
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _buildSection(
+                      title: 'Precio de consulta',
+                      icon: Icons.attach_money,
+                      child: _buildPriceField(),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildSection(
+                      title: 'Estudios médicos',
+                      icon: Icons.attach_file,
+                      child: AttachmentWidget(
+                        initialAttachments: _attachments,
+                        onAttachmentsChanged: (attachments) =>
+                            setState(() => _attachments = attachments),
+                        patient: _patient,
+                        consultationDate: DateTime.now(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           
@@ -294,7 +282,7 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
 
           const SizedBox(height: 16),
 
-          // Row 2: Medicamentos, Plan de tratamiento
+          // Row 2: Medicamentos, Observaciones
           IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -313,13 +301,9 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildSection(
-                    title: 'Plan de tratamiento',
-                    icon: Icons.healing,
-                    child: TreatmentForm(
-                      initialTreatments: _treatments,
-                      onTreatmentsChanged: (treatments) =>
-                          setState(() => _treatments = treatments),
-                    ),
+                    title: 'Observaciones',
+                    icon: Icons.notes,
+                    child: _buildObservationsField(),
                   ),
                 ),
               ],
@@ -328,42 +312,36 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
 
           const SizedBox(height: 16),
 
-          // Row 3: Observaciones (full width)
-          _buildSection(
-            title: 'Observaciones',
-            icon: Icons.notes,
-            child: _buildObservationsField(),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Row 4: Precio de consulta, Estudios médicos
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: _buildSection(
-                    title: 'precio de consulta',
-                    icon: Icons.attach_money,
-                    child: _buildPriceField(),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildSection(
-                    title: 'Estudios médicos',
-                    icon: Icons.attach_file,
-                    child: AttachmentWidget(
-                      initialAttachments: _attachments,
-                      onAttachmentsChanged: (attachments) =>
-                          setState(() => _attachments = attachments),
-                      patient: _patient,
-                      consultationDate: DateTime.now(),
+          // Row 3: Precio de consulta, Estudios médicos
+          SizedBox(
+            height: 300, // Altura menor para estas cards
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _buildSection(
+                      title: 'Precio de consulta',
+                      icon: Icons.attach_money,
+                      child: _buildPriceField(),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildSection(
+                      title: 'Estudios médicos',
+                      icon: Icons.attach_file,
+                      child: AttachmentWidget(
+                        initialAttachments: _attachments,
+                        onAttachmentsChanged: (attachments) =>
+                            setState(() => _attachments = attachments),
+                        patient: _patient,
+                        consultationDate: DateTime.now(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           
@@ -421,18 +399,22 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
           ),
         ),
 
-        // 5. Plan de Tratamiento
+
+        // 6. Observaciones
         _buildSection(
-          title: 'Plan de Tratamiento',
-          icon: Icons.healing,
-          child: TreatmentForm(
-            initialTreatments: _treatments,
-            onTreatmentsChanged: (treatments) =>
-                setState(() => _treatments = treatments),
-          ),
+          title: 'Observaciones',
+          icon: Icons.notes,
+          child: _buildObservationsField(),
         ),
 
-        // 6. Archivos Adjuntos
+        // 7. Precio
+        _buildSection(
+          title: 'Precio de consulta',
+          icon: Icons.attach_money,
+          child: _buildPriceField(),
+        ),
+        
+        // 5. Archivos Adjuntos
         _buildSection(
           title: 'Estudios médicos',
           icon: Icons.attach_file,
@@ -443,20 +425,6 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
             patient: _patient,
             consultationDate: DateTime.now(),
           ),
-        ),
-
-        // 7. Observaciones
-        _buildSection(
-          title: 'Observaciones',
-          icon: Icons.notes,
-          child: _buildObservationsField(),
-        ),
-
-        // 8. Precio
-        _buildSection(
-          title: 'Precio de consulta',
-          icon: Icons.attach_money,
-          child: _buildPriceField(),
         ),
 
         const SizedBox(height: 16),
@@ -477,10 +445,9 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: SizedBox(
         height:
-            title == 'Observaciones' ||
                 title == 'Precio de consulta' ||
                 title == 'Estudios médicos'
-            ? 250
+            ? 300
             : 600,
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -544,13 +511,18 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
         hintText: '500.00',
         prefixIcon: Icon(Icons.attach_money),
         border: OutlineInputBorder(),
+        helperText: 'Solo números y punto decimal',
       ),
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+      ],
       validator: (value) {
         if (value?.isEmpty == true) return 'El precio es requerido';
-        final price = double.tryParse(value!);
+        final price = double.tryParse(value!.replaceAll(',', '.'));
         if (price == null) return 'Precio inválido';
         if (price < 0) return 'El precio no puede ser negativo';
+        if (price > 999999) return 'Precio demasiado alto (máx: \$999,999)';
         return null;
       },
     );
@@ -668,7 +640,6 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
         symptoms: _symptoms,
         diagnoses: _diagnoses,
         medications: _medications,
-        treatments: _treatments,
         attachments: _attachments,
         observations: _observationsController.text.trim().isEmpty
             ? null
@@ -888,7 +859,6 @@ class _ConsultationPageState extends ConsumerState<ConsultationPage> {
     setState(() {
       _symptoms.clear();
       _medications.clear();
-      _treatments.clear();
       _diagnoses.clear();
       _attachments.clear();
     });

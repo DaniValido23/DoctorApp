@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:doctor_app/data/models/models.dart';
 import 'package:doctor_app/data/repositories/repositories.dart';
+import 'package:doctor_app/services/file_organization_service.dart';
+import 'package:doctor_app/core/utils/utils.dart';
+import 'dart:io';
 
 class ConsultationNotifier extends StateNotifier<AsyncValue<List<Consultation>>> {
   final ConsultationRepository _repository;
@@ -59,7 +62,16 @@ class ConsultationNotifier extends StateNotifier<AsyncValue<List<Consultation>>>
 
   Future<void> deleteConsultation(int consultationId) async {
     try {
+      // Get consultation data before deleting from database
+      final consultation = await _repository.getConsultationById(consultationId);
+
+      // Delete from database first
       await _repository.deleteConsultation(consultationId);
+
+      // Delete consultation folder if consultation exists
+      if (consultation != null) {
+        await _deleteConsultationFolder(consultation);
+      }
 
       state.whenData((consultations) {
         final updatedList = consultations.where((c) => c.id != consultationId).toList();
@@ -68,6 +80,34 @@ class ConsultationNotifier extends StateNotifier<AsyncValue<List<Consultation>>>
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
+    }
+  }
+
+  /// Delete consultation folder and all its contents
+  Future<void> _deleteConsultationFolder(Consultation consultation) async {
+    try {
+      final patient = await PatientRepository().getPatientById(consultation.patientId);
+      if (patient == null) {
+        appLogger.w('Patient not found for consultation ${consultation.id}, cannot delete folder');
+        return;
+      }
+
+      final consultationPath = await FileOrganizationService.getConsultationDirectoryPath(
+        patient,
+        consultation.date
+      );
+
+      final consultationDirectory = Directory(consultationPath);
+
+      if (await consultationDirectory.exists()) {
+        await consultationDirectory.delete(recursive: true);
+        appLogger.i('Consultation folder deleted: $consultationPath');
+      } else {
+        appLogger.w('Consultation folder does not exist: $consultationPath');
+      }
+    } catch (e) {
+      appLogger.e('Error deleting consultation folder for consultation ${consultation.id}', error: e);
+      // Don't rethrow - folder deletion failure shouldn't prevent consultation deletion
     }
   }
 }

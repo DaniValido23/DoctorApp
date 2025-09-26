@@ -40,9 +40,6 @@ class ConsultationRepository {
       // Insert symptoms
       await _insertSymptoms(txn, consultationId, consultation.symptoms);
 
-      // Insert treatments
-      await _insertTreatments(txn, consultationId, consultation.treatments);
-
       // Insert diagnoses
       await _insertDiagnoses(txn, consultationId, consultation.diagnoses);
 
@@ -75,7 +72,6 @@ class ConsultationRepository {
 
     // Get related data
     final symptoms = await _getConsultationSymptoms(db, id);
-    final treatments = await _getConsultationTreatments(db, id);
     final diagnoses = await _getConsultationDiagnoses(db, id);
     final medications = await _getConsultationMedications(db, id);
     final attachments = await _getConsultationAttachments(db, id);
@@ -95,7 +91,6 @@ class ConsultationRepository {
       symptoms: symptoms,
       diagnoses: diagnoses,
       medications: medications,
-      treatments: treatments,
       attachments: attachments,
       observations: consultationMap[DatabaseConstants.columnConsultationObservations],
       price: consultationMap[DatabaseConstants.columnConsultationPrice],
@@ -142,22 +137,6 @@ class ConsultationRepository {
     }
   }
 
-  Future<void> _insertTreatments(Transaction txn, int consultationId, List<String> treatments) async {
-    for (final treatmentName in treatments) {
-      // Insert or get treatment ID
-      final treatmentId = await _getOrInsertTreatment(txn, treatmentName);
-
-      // Insert junction record
-      await txn.insert(
-        DatabaseConstants.consultationTreatmentsTable,
-        {
-          DatabaseConstants.columnJunctionConsultationId: consultationId,
-          DatabaseConstants.columnJunctionTreatmentId: treatmentId,
-        },
-        conflictAlgorithm: ConflictAlgorithm.ignore,
-      );
-    }
-  }
 
   Future<void> _insertDiagnoses(Transaction txn, int consultationId, List<String> diagnoses) async {
     for (final diagnosisName in diagnoses) {
@@ -224,25 +203,6 @@ class ConsultationRepository {
     );
   }
 
-  Future<int> _getOrInsertTreatment(Transaction txn, String treatmentName) async {
-    final result = await txn.query(
-      DatabaseConstants.treatmentsTable,
-      where: '${DatabaseConstants.columnTreatmentName} = ?',
-      whereArgs: [treatmentName],
-    );
-
-    if (result.isNotEmpty) {
-      return result.first[DatabaseConstants.columnId] as int;
-    }
-
-    return await txn.insert(
-      DatabaseConstants.treatmentsTable,
-      {
-        DatabaseConstants.columnTreatmentName: treatmentName,
-        DatabaseConstants.columnCreatedAt: DateTime.now().toIso8601String(),
-      },
-    );
-  }
 
   Future<int> _getOrInsertDiagnosis(Transaction txn, String diagnosisName) async {
     final result = await txn.query(
@@ -277,17 +237,6 @@ class ConsultationRepository {
     return result.map((row) => row[DatabaseConstants.columnSymptomName] as String).toList();
   }
 
-  Future<List<String>> _getConsultationTreatments(Database db, int consultationId) async {
-    final result = await db.rawQuery('''
-      SELECT t.${DatabaseConstants.columnTreatmentName}
-      FROM ${DatabaseConstants.treatmentsTable} t
-      INNER JOIN ${DatabaseConstants.consultationTreatmentsTable} ct
-        ON t.${DatabaseConstants.columnId} = ct.${DatabaseConstants.columnJunctionTreatmentId}
-      WHERE ct.${DatabaseConstants.columnJunctionConsultationId} = ?
-    ''', [consultationId]);
-
-    return result.map((row) => row[DatabaseConstants.columnTreatmentName] as String).toList();
-  }
 
   Future<List<String>> _getConsultationDiagnoses(Database db, int consultationId) async {
     final result = await db.rawQuery('''

@@ -1036,7 +1036,7 @@ class _PatientConsultationsPageState extends ConsumerState<PatientConsultationsP
   }
 }
 
-class _ConsultationDetailsDialog extends ConsumerWidget {
+class _ConsultationDetailsDialog extends ConsumerStatefulWidget {
   final Consultation consultation;
   final Function(String, String?) onOpenFile;
   final Function(Consultation) onDeleteConsultation;
@@ -1048,7 +1048,108 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ConsultationDetailsDialog> createState() => _ConsultationDetailsDialogState();
+}
+
+class _ConsultationDetailsDialogState extends ConsumerState<_ConsultationDetailsDialog> {
+  late List<Attachment> _availableAttachments;
+  String? _availablePdfPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _availableAttachments = List.from(widget.consultation.attachments);
+    _availablePdfPath = widget.consultation.pdfPath;
+    _checkFileAvailability();
+  }
+
+  Future<void> _checkFileAvailability() async {
+    // Check PDF availability
+    if (_availablePdfPath != null && !await File(_availablePdfPath!).exists()) {
+      setState(() {
+        _availablePdfPath = null;
+      });
+    }
+
+    // Check attachments availability
+    final List<Attachment> availableAttachments = [];
+    for (final attachment in _availableAttachments) {
+      if (await File(attachment.filePath).exists()) {
+        availableAttachments.add(attachment);
+      }
+    }
+
+    if (availableAttachments.length != _availableAttachments.length) {
+      setState(() {
+        _availableAttachments = availableAttachments;
+      });
+    }
+  }
+
+  Future<void> _openFileWithErrorHandling(String filePath, String? fileType, {String? fileName}) async {
+    try {
+      final file = File(filePath);
+      if (!await file.exists()) {
+        _showFileNotFoundDialog(fileName ?? 'El archivo');
+        await _checkFileAvailability(); // Refresh file list
+        return;
+      }
+      widget.onOpenFile(filePath, fileType);
+    } catch (e) {
+      _showErrorDialog('Error al abrir el archivo', e.toString());
+    }
+  }
+
+  void _showFileNotFoundDialog(String fileName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Archivo no encontrado'),
+          ],
+        ),
+        content: Text(
+          '$fileName no se encuentra en el sistema.\n\n'
+          'Es posible que haya sido eliminado o movido. '
+          'El archivo será removido de la lista.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.red),
+            const SizedBox(width: 8),
+            Text(title),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isMobile = ResponsiveUtils.isMobile(context);
     final isTablet = ResponsiveUtils.isTablet(context);
 
@@ -1115,7 +1216,7 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
             ),
             SizedBox(height: isMobile ? 8 : 12),
             Text(
-              DateFormat('dd/MM/yyyy - HH:mm').format(consultation.date),
+              DateFormat('dd/MM/yyyy - HH:mm').format(widget.consultation.date),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Colors.grey[600],
                 fontSize: isMobile ? 14 : null,
@@ -1129,17 +1230,23 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Información básica en tabla de dos columnas
-                    _buildBasicInfoTable(context, consultation, isMobile),
-                    SizedBox(height: isMobile ? 20 : 24),
+                    // Signos vitales
+                    if (_hasVitalSigns(widget.consultation)) ...[
+                      _buildVitalSignsTable(context, widget.consultation, isMobile),
+                      SizedBox(height: isMobile ? 20 : 24),
+                    ],
 
                     // Información médica en tabla de dos columnas
-                    _buildMedicalInfoTable(context, consultation, isMobile),
+                    _buildMedicalInfoTable(context, widget.consultation, isMobile),
+                    SizedBox(height: isMobile ? 20 : 24),
+
+                    // Información básica en tabla de dos columnas
+                    _buildBasicInfoTable(context, widget.consultation, isMobile),
                     SizedBox(height: isMobile ? 20 : 24),
 
                     // Archivos adjuntos y receta
-                    if (consultation.attachments.isNotEmpty || consultation.pdfPath != null) ...[
-                      _buildAttachmentsSection(context, consultation, isMobile),
+                    if (_availableAttachments.isNotEmpty || _availablePdfPath != null) ...[
+                      _buildAttachmentsSection(context, widget.consultation, isMobile),
                       SizedBox(height: isMobile ? 16 : 24),
                     ],
                   ],
@@ -1181,7 +1288,7 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Información General',
+              'Información Adicional',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: isMobile ? 16 : 18,
@@ -1195,10 +1302,12 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
                 1: FlexColumnWidth(2),
               },
               children: [
-                _buildTableRow('Peso:', '${consultation.weight?.toStringAsFixed(1)} kg', isMobile),
-                _buildTableRow('Precio:', '\$${NumberFormat('#,###', 'en_US').format(consultation.price)}', isMobile),
-                if (consultation.observations?.isNotEmpty == true)
-                  _buildTableRow('Observaciones:', consultation.observations!, isMobile),
+                // Información económica
+                _buildTableRow('Precio:', '\$${NumberFormat('#,###', 'en_US').format(widget.consultation.price)}', isMobile),
+
+                // Observaciones
+                if (widget.consultation.observations?.isNotEmpty == true)
+                  _buildTableRow('Observaciones:', widget.consultation.observations!, isMobile),
               ],
             ),
           ],
@@ -1230,12 +1339,10 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
                 1: FlexColumnWidth(2),
               },
               children: [
-                _buildTableRow('Síntomas:', consultation.symptoms.join(', '), isMobile),
-                if (consultation.medications.isNotEmpty)
-                  _buildTableRow('Medicamentos:', _formatMedications(consultation.medications), isMobile),
-                if (consultation.treatments.isNotEmpty)
-                  _buildTableRow('Tratamientos:', consultation.treatments.join(', '), isMobile),
-                _buildTableRow('Diagnósticos:', consultation.diagnoses.join(', '), isMobile),
+                _buildTableRow('Síntomas:', widget.consultation.symptoms.join(', '), isMobile),
+                if (widget.consultation.medications.isNotEmpty)
+                  _buildTableRow('Medicamentos:', _formatMedications(widget.consultation.medications), isMobile),
+                _buildTableRow('Diagnósticos:', widget.consultation.diagnoses.join(', '), isMobile),
               ],
             ),
           ],
@@ -1276,9 +1383,62 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
     return medications.map((med) => '${med.name} - ${med.dosage} - ${med.frequency}').join('\n');
   }
 
+  bool _hasVitalSigns(Consultation consultation) {
+    return consultation.bodyTemperature != null ||
+           consultation.bloodPressureSystolic != null ||
+           consultation.bloodPressureDiastolic != null ||
+           consultation.oxygenSaturation != null ||
+           consultation.weight != null ||
+           consultation.height != null;
+  }
+
+  Widget _buildVitalSignsTable(BuildContext context, Consultation consultation, bool isMobile) {
+    return Card(
+      elevation: 1,
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Signos Vitales',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: isMobile ? 16 : 18,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Table(
+              columnWidths: const {
+                0: FlexColumnWidth(1),
+                1: FlexColumnWidth(2),
+              },
+              children: [
+                if (consultation.bodyTemperature != null)
+                  _buildTableRow('Temperatura:', '${consultation.bodyTemperature!.toStringAsFixed(1)}°C', isMobile),
+                if (consultation.bloodPressureSystolic != null && consultation.bloodPressureDiastolic != null)
+                  _buildTableRow('Presión arterial:', '${consultation.bloodPressureSystolic}/${consultation.bloodPressureDiastolic} mmHg', isMobile),
+                if (consultation.oxygenSaturation != null)
+                  _buildTableRow('Saturación O2:', '${consultation.oxygenSaturation!.toStringAsFixed(1)}%', isMobile),
+                if (consultation.weight != null)
+                  _buildTableRow('Peso:', '${consultation.weight!.toStringAsFixed(1)} kg', isMobile),
+                if (consultation.height != null)
+                  _buildTableRow('Altura:', '${consultation.height!.toStringAsFixed(1)} cm', isMobile),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildAttachmentsSection(BuildContext context, Consultation consultation, bool isMobile) {
-    final totalFiles = consultation.attachments.length + (consultation.pdfPath != null ? 1 : 0);
+    final totalFiles = _availableAttachments.length + (_availablePdfPath != null ? 1 : 0);
+
+    if (totalFiles == 0) {
+      return const SizedBox.shrink();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1298,9 +1458,9 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
           runSpacing: 8,
           children: [
             // PDF de receta si existe
-            if (consultation.pdfPath != null)
+            if (_availablePdfPath != null)
               InkWell(
-                onTap: () => onOpenFile(consultation.pdfPath!, 'PDF'),
+                onTap: () => _openFileWithErrorHandling(_availablePdfPath!, 'PDF', fileName: 'Receta Médica'),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   padding: EdgeInsets.symmetric(
@@ -1341,8 +1501,8 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
               ),
 
             // Archivos adjuntos
-            ...consultation.attachments.map((attachment) => InkWell(
-              onTap: () => onOpenFile(attachment.filePath, attachment.fileType),
+            ..._availableAttachments.map((attachment) => InkWell(
+              onTap: () => _openFileWithErrorHandling(attachment.filePath, attachment.fileType, fileName: attachment.fileName),
               borderRadius: BorderRadius.circular(8),
               child: Container(
                 padding: EdgeInsets.symmetric(
@@ -1398,7 +1558,7 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Eliminar Consulta'),
-        content: Text('¿Estás seguro de que deseas eliminar esta consulta del ${DateFormat('dd/MM/yyyy').format(consultation.date)}?'),
+        content: Text('¿Estás seguro de que deseas eliminar esta consulta del ${DateFormat('dd/MM/yyyy').format(widget.consultation.date)}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -1407,7 +1567,7 @@ class _ConsultationDetailsDialog extends ConsumerWidget {
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop();
-              onDeleteConsultation(consultation);
+              widget.onDeleteConsultation(widget.consultation);
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Eliminar'),

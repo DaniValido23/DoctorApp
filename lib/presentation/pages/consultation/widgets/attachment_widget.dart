@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:doctor_app/data/models/attachment.dart';
 import 'package:doctor_app/data/models/patient.dart';
 import 'package:doctor_app/services/file_organization_service.dart';
+import 'package:doctor_app/core/utils/utils.dart';
 
 class AttachmentWidget extends StatefulWidget {
   final List<Attachment> initialAttachments;
@@ -54,11 +55,10 @@ class _AttachmentWidgetState extends State<AttachmentWidget> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al seleccionar archivos: $e'),
-            backgroundColor: Colors.red,
-          ),
+        ErrorHandler.handleGeneralError(
+          context,
+          e,
+          customMessage: 'Error al seleccionar archivos. Intente nuevamente.',
         );
       }
     } finally {
@@ -71,7 +71,7 @@ class _AttachmentWidgetState extends State<AttachmentWidget> {
       String destinationPath;
 
       if (widget.patient != null && widget.consultationDate != null) {
-        // Save to consultation folder
+        // Save to consultation folder (includes size validation)
         destinationPath =
             await FileOrganizationService.copyFileToConsultationFolder(
               widget.patient!,
@@ -80,6 +80,9 @@ class _AttachmentWidgetState extends State<AttachmentWidget> {
             );
       } else {
         // Fallback to old behavior for compatibility
+        // First validate file size
+        await FileOrganizationService.validateFileSize(file.path!);
+
         final appDir = await getApplicationDocumentsDirectory();
         final attachmentsDir = Directory('${appDir.path}/attachments');
 
@@ -108,23 +111,9 @@ class _AttachmentWidgetState extends State<AttachmentWidget> {
       });
 
       widget.onAttachmentsChanged(_attachments);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Archivo "${file.name}" agregado correctamente'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al guardar archivo: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ErrorHandler.handleFileError(context, e);
       }
     }
   }
@@ -144,23 +133,9 @@ class _AttachmentWidgetState extends State<AttachmentWidget> {
       });
 
       widget.onAttachmentsChanged(_attachments);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Archivo "${attachment.fileName}" eliminado'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al eliminar archivo: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ErrorHandler.handleFileError(context, e);
       }
     }
   }
@@ -169,40 +144,52 @@ class _AttachmentWidgetState extends State<AttachmentWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Lista scrollable de archivos adjuntos
-        Expanded(
-          child: _attachments.isEmpty
-              ? _buildEmptyState()
-              : _buildCompactAttachmentsList(),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Reservamos espacio para el botón (aproximadamente 60px) y padding
+        final availableHeight = constraints.maxHeight - 80;
 
-        // Botón para agregar archivos en la parte inferior
-        Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _isLoading ? null : _pickFiles,
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue,),
-                    )
-                  : const Icon(Icons.add, color: Colors.blue),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.blue),
-              ),
-              label: const Text(
-                'Agregar Estudio',
-                style: TextStyle(color: Colors.blue),
+        return Column(
+          children: [
+            // Lista scrollable de archivos adjuntos que toma el espacio disponible
+            Expanded(
+              child: SizedBox(
+                height: availableHeight > 0 ? availableHeight : 150,
+                child: _attachments.isEmpty
+                    ? _buildEmptyState()
+                    : _buildCompactAttachmentsList(),
               ),
             ),
-          ),
-        ),
-      ],
+
+            // Botón para agregar archivos en la parte inferior
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: SizedBox(
+                width: 200,
+                height: 40, // Altura fija para el botón
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading ? null : _pickFiles,
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.blue,),
+                        )
+                      : const Icon(Icons.add, color: Colors.blue, size: 18),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.blue),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  label: const Text(
+                    'Agregar Estudio',
+                    style: TextStyle(color: Colors.blue, fontSize: 12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -211,20 +198,12 @@ class _AttachmentWidgetState extends State<AttachmentWidget> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.attach_file_outlined, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 12),
+          Icon(Icons.attach_file_outlined, size: 36, color: Colors.grey[400]),
+          const SizedBox(height: 8),
           Text(
             'Sin estudios médicos',
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Agregar documentos o imágenes',
-            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey[500],
+              color: Colors.grey[600],
             ),
           ),
         ],
@@ -233,81 +212,85 @@ class _AttachmentWidgetState extends State<AttachmentWidget> {
   }
 
   Widget _buildCompactAttachmentsList() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          // Contador de archivos
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.attach_file, size: 16, color: Colors.blue),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${_attachments.length} estudio${_attachments.length != 1 ? 's' : ''}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+    return Column(
+      children: [
+        // Contador de archivos (fijo en la parte superior)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.blue.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(6),
           ),
-          const SizedBox(height: 8),
-
-          // Lista compacta de archivos
-          ...List.generate(_attachments.length, (index) {
-            final attachment = _attachments[index];
-            return Card(
-              margin: const EdgeInsets.only(bottom: 6),
-              elevation: 1,
-              child: ListTile(
-                dense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                leading: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: _getFileTypeColor(attachment.fileType),
-                  child: Icon(
-                    _getFileTypeIcon(attachment.fileType),
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-                title: Text(
-                  attachment.fileName,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                subtitle: Text(
-                  '${attachment.fileType.toUpperCase()} • ${_formatCompactDate(attachment.uploadedAt)}',
+          child: Row(
+            children: [
+              Icon(Icons.attach_file, size: 14, color: Colors.blue),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  '${_attachments.length} estudio${_attachments.length != 1 ? 's' : ''}',
                   style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
-                ),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 18, color: Colors.red),
-                  onPressed: () => _showDeleteDialog(index, attachment.fileName),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 ),
               ),
-            );
-          }),
-        ],
-      ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // Lista scrollable de archivos
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: List.generate(_attachments.length, (index) {
+                final attachment = _attachments[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 4),
+                  elevation: 1,
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    leading: CircleAvatar(
+                      radius: 14,
+                      backgroundColor: _getFileTypeColor(attachment.fileType),
+                      child: Icon(
+                        _getFileTypeIcon(attachment.fileType),
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                    ),
+                    title: Text(
+                      attachment.fileName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      '${attachment.fileType.toUpperCase()} • ${_formatCompactDate(attachment.uploadedAt)}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                      onPressed: () => _showDeleteDialog(index, attachment.fileName),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

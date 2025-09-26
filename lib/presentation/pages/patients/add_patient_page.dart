@@ -97,9 +97,13 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
                                   labelText: 'Nombre completo *',
                                   prefixIcon: Icon(Icons.person),
                                   border: OutlineInputBorder(),
+                                  
                                 ),
                                 style: const TextStyle(fontSize: 16),
                                 textCapitalization: TextCapitalization.words,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]')),
+                                ],
                                 validator: _validateName,
                                 textInputAction: TextInputAction.next,
                               ),
@@ -177,11 +181,11 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
                               TextFormField(
                                 controller: _phoneController,
                                 decoration: const InputDecoration(
-                                  labelText: 'Teléfono *',
+                                  labelText: 'Teléfono (opcional)',
                                   prefixIcon: Icon(Icons.phone),
                                   border: OutlineInputBorder(),
-                                  hintText: 'Ej: +1234567890',
-                                  helperText: 'Varios pacientes pueden compartir el mismo teléfono',
+                                  
+                                  helperText: 'Solo números, guiones, paréntesis y espacios',
                                 ),
                                 style: const TextStyle(fontSize: 16),
                                 keyboardType: TextInputType.phone,
@@ -200,7 +204,7 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
                                   labelText: 'Email (opcional)',
                                   prefixIcon: Icon(Icons.email),
                                   border: OutlineInputBorder(),
-                                  hintText: 'ejemplo@email.com',
+                                  
                                 ),
                                 style: const TextStyle(fontSize: 16),
                                 keyboardType: TextInputType.emailAddress,
@@ -239,8 +243,12 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
                               labelText: 'Nombre completo *',
                               prefixIcon: Icon(Icons.person),
                               border: OutlineInputBorder(),
+                              
                             ),
                             textCapitalization: TextCapitalization.words,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]')),
+                            ],
                             validator: _validateName,
                             textInputAction: TextInputAction.next,
                           ),
@@ -314,11 +322,11 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
                           TextFormField(
                             controller: _phoneController,
                             decoration: const InputDecoration(
-                              labelText: 'Teléfono *',
+                              labelText: 'Teléfono (opcional)',
                               prefixIcon: Icon(Icons.phone),
                               border: OutlineInputBorder(),
-                              hintText: 'Ej: +1234567890',
-                              helperText: 'Varios pacientes pueden compartir el mismo teléfono',
+                              
+                              helperText: 'Solo números, guiones, paréntesis y espacios',
                             ),
                             keyboardType: TextInputType.phone,
                             inputFormatters: [
@@ -336,7 +344,7 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
                               labelText: 'Email (opcional)',
                               prefixIcon: Icon(Icons.email),
                               border: OutlineInputBorder(),
-                              hintText: 'ejemplo@email.com',
+                              
                             ),
                             keyboardType: TextInputType.emailAddress,
                             validator: _validateEmail,
@@ -478,6 +486,14 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
     if (value.trim().length > 100) {
       return 'El nombre no puede exceder 100 caracteres';
     }
+    // Verificar que solo contenga letras y espacios
+    if (!RegExp(r'^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$').hasMatch(value.trim())) {
+      return 'El nombre solo puede contener letras y espacios';
+    }
+    // Verificar que no tenga múltiples espacios consecutivos
+    if (value.trim().contains(RegExp(r'\s{2,}'))) {
+      return 'El nombre no puede tener espacios consecutivos';
+    }
     return null;
   }
 
@@ -496,8 +512,9 @@ class _AddPatientPageState extends ConsumerState<AddPatientPage> {
   }
 
   String? _validatePhone(String? value) {
+    // El teléfono ahora es opcional
     if (value == null || value.trim().isEmpty) {
-      return 'El teléfono es obligatorio';
+      return null;
     }
     final cleanPhone = value.replaceAll(RegExp(r'[^\d]'), '');
     if (cleanPhone.length < 7) {

@@ -82,42 +82,43 @@ class PatientCard extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
 
-              // Teléfono - clickeable para WhatsApp
-              InkWell(
-                onTap: () => _openWhatsApp(patient.phone),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.phone,
-                        size: 16,
-                        color: Colors.green[700],
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          patient.phone,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green[700],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+              // Teléfono - clickeable para WhatsApp (solo si hay teléfono)
+              if (patient.phone.isNotEmpty)
+                InkWell(
+                  onTap: () => _openWhatsApp(patient.phone),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.phone,
+                          size: 16,
+                          color: Colors.green[700],
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            patient.phone,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green[700],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -183,20 +184,22 @@ class PatientCard extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
 
-              // Información de contacto
-              _buildPhoneRow(context, patient.phone),
+              // Información de contacto (solo si hay teléfono)
+              if (patient.phone.isNotEmpty) ...[
+                _buildPhoneRow(context, patient.phone),
+                const SizedBox(height: 8),
+              ],
 
               if (patient.email?.isNotEmpty == true) ...[
-                const SizedBox(height: 8),
                 _buildInfoRow(
                   context,
                   Icons.email,
                   'Email',
                   patient.email!,
                 ),
+                const SizedBox(height: 8),
               ],
 
-              const SizedBox(height: 8),
               _buildInfoRow(
                 context,
                 Icons.cake,

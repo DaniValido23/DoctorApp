@@ -7,11 +7,9 @@ class DatabaseConstants {
   static const String consultationsTable = 'consultations';
   static const String medicationsTable = 'medications';
   static const String symptomsTable = 'symptoms';
-  static const String treatmentsTable = 'treatments';
   static const String diagnosesTable = 'diagnoses';
   static const String attachmentsTable = 'attachments';
   static const String consultationSymptomsTable = 'consultation_symptoms';
-  static const String consultationTreatmentsTable = 'consultation_treatments';
   static const String consultationDiagnosesTable = 'consultation_diagnoses';
 
   // Common columns
@@ -52,8 +50,6 @@ class DatabaseConstants {
   // Symptoms table columns
   static const String columnSymptomName = 'name';
 
-  // Treatments table columns
-  static const String columnTreatmentName = 'name';
 
   // Diagnoses table columns
   static const String columnDiagnosisName = 'name';
@@ -68,6 +64,5 @@ class DatabaseConstants {
   // Junction table columns
   static const String columnJunctionConsultationId = 'consultation_id';
   static const String columnJunctionSymptomId = 'symptom_id';
-  static const String columnJunctionTreatmentId = 'treatment_id';
   static const String columnJunctionDiagnosisId = 'diagnosis_id';
 }
